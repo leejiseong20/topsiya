@@ -82,7 +82,7 @@ flowchart LR
 | 구분 | 기술 |
 |---|---|
 | Frontend | React, Vite, Axios |
-| Backend | Java 17, Spring Boot 3, Spring Data JPA, WebClient |
+| Backend | Java 17, Spring Boot 3, Spring Data JPA, RestClient |
 | Database | MySQL (개발 중에는 H2) |
 | 외부 API | Riot Games API, OpenAI API, Data Dragon |
 | 협업/배포 | GitHub |
@@ -166,21 +166,38 @@ AI에게 원본 데이터를 통째로 주지 않는다. 40분 경기의 타임�
 
 ## 7. 실행 방법
 
-> 개발이 진행되면서 업데이트 예정
+### 준비물
+- JDK 17 이상, Node.js 18 이상
+- Riot API 키: [developer.riotgames.com](https://developer.riotgames.com) 로그인 → **DEVELOPMENT API KEY** 발급 (24시간마다 만료)
 
+### 1) API 키 설정
+`backend/src/main/resources/application-secret.yml.example`을 같은 폴더에 `application-secret.yml`로 복사하고 키를 넣는다.
+
+```yaml
+riot:
+  api-key: RGAPI-xxxxxxxx
+```
+
+`application-secret.yml`은 `.gitignore`에 포함되어 GitHub에 올라가지 않는다. **API 키는 절대 코드에 직접 쓰지 않는다.**
+
+### 2) 백엔드 실행 (http://localhost:8080)
 ```bash
-# Backend
 cd backend
-# application.yml 또는 환경변수에 RIOT_API_KEY, OPENAI_API_KEY 설정
-./gradlew bootRun
+./gradlew bootRun        # Windows: gradlew.bat bootRun
+```
+IntelliJ에서는 `backend` 폴더를 열고 `TopsiyaApplication`을 실행해도 된다.
 
-# Frontend
+### 3) 프론트엔드 실행 (http://localhost:5173)
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-**API 키는 절대 코드에 직접 쓰지 않는다.** 환경변수로만 관리하고 `.gitignore`로 커밋을 막는다.
+### 현재 구현된 API
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/summoners/{gameName}/{tagLine}/matches?count=10` | Riot ID로 최근 경기 목록 (최대 20개) |
 
 ---
 

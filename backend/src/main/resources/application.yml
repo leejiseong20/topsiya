@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: topsiya
+  config:
+    # API 키는 application-secret.yml 에 따로 둔다 (.gitignore 로 커밋 제외)
+    import: optional:classpath:application-secret.yml
+
+server:
+  port: 8080
+
+riot:
+  # application-secret.yml 이 없으면 RIOT_API_KEY 환경변수를 사용
+  api-key: ${RIOT_API_KEY:}
+  regional-host: asia.api.riotgames.com
