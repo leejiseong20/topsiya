@@ -24,3 +24,6 @@ npm-debug.log*
 .vscode/
 .DS_Store
 Thumbs.db
+
+# 키를 임시로 적어둔 텍스트 파일
+*api_key*.txt
