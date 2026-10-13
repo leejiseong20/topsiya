@@ -1,0 +1,26 @@
+# ===== 비밀 키 (절대 커밋 금지) =====
+.env
+.env.*
+!.env.example
+application-secret.yml
+application-local.yml
+
+# ===== Java / Spring Boot =====
+backend/build/
+backend/.gradle/
+backend/out/
+*.class
+*.log
+HELP.md
+
+# ===== Node / React =====
+frontend/node_modules/
+frontend/dist/
+npm-debug.log*
+
+# ===== IDE / OS =====
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
