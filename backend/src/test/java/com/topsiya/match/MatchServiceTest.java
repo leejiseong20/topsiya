@@ -65,6 +65,7 @@ class MatchServiceTest {
 
         verify(client).getMatchIds(MY_PUUID, MatchService.MAX_COUNT);
         assertThat(response.gameName()).isEqualTo("Hide on bush");
+        assertThat(response.puuid()).isEqualTo(MY_PUUID);
         assertThat(response.matches()).hasSize(1);
         assertThat(response.matches().get(0).matchId()).isEqualTo("KR_1");
     }
@@ -72,10 +73,10 @@ class MatchServiceTest {
     /** 나(블루팀 TOP) + 같은 팀 정글 + 상대 정글 + 상대 TOP */
     private static MatchDto sampleMatch(String matchId, String myPosition, String opponentPosition) {
         List<Participant> participants = List.of(
-                new Participant(MY_PUUID, "Darius", myPosition, 100, false, 3, 6, 2, 180, 4, 14),
-                new Participant("ally-jg", "LeeSin", "JUNGLE", 100, false, 2, 5, 7, 30, 140, 13),
-                new Participant("enemy-jg", "Vi", "JUNGLE", 200, true, 6, 2, 8, 25, 150, 15),
-                new Participant("enemy-top", "Kennen", opponentPosition, 200, true, 5, 3, 4, 200, 0, 15)
+                new Participant(1, MY_PUUID, "Darius", myPosition, 100, false, 3, 6, 2, 180, 4, 14),
+                new Participant(2, "ally-jg", "LeeSin", "JUNGLE", 100, false, 2, 5, 7, 30, 140, 13),
+                new Participant(7, "enemy-jg", "Vi", "JUNGLE", 200, true, 6, 2, 8, 25, 150, 15),
+                new Participant(6, "enemy-top", "Kennen", opponentPosition, 200, true, 5, 3, 4, 200, 0, 15)
         );
         MatchDto.Info info = new MatchDto.Info(1920, 1_760_000_000_000L, 420, participants);
         MatchDto.Metadata metadata = new MatchDto.Metadata(matchId, List.of());

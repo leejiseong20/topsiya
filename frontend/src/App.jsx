@@ -86,7 +86,12 @@ export default function App() {
           ) : (
             <div className="match-list">
               {result.matches.map((match) => (
-                <MatchCard key={match.matchId} match={match} champData={champData} />
+                <MatchCard
+                  key={match.matchId}
+                  match={match}
+                  puuid={result.puuid}
+                  champData={champData}
+                />
               ))}
             </div>
           )}

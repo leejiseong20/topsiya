@@ -15,11 +15,21 @@ export function parseRiotId(input) {
 }
 
 /** 백엔드에서 최근 경기 목록을 가져온다. 실패하면 서버가 준 메시지로 Error 를 던진다. */
-export async function fetchRecentMatches(gameName, tagLine, count = 10) {
-  const url =
+export function fetchRecentMatches(gameName, tagLine, count = 10) {
+  return getJson(
     `/api/summoners/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}` +
-    `/matches?count=${count}`;
+      `/matches?count=${count}`,
+  );
+}
 
+/** 한 경기의 라인전 요약 (CS·골드 격차, 데스 상황 등) */
+export function fetchLaneReport(matchId, puuid) {
+  return getJson(
+    `/api/matches/${encodeURIComponent(matchId)}/lane?puuid=${encodeURIComponent(puuid)}`,
+  );
+}
+
+async function getJson(url) {
   let response;
   try {
     response = await fetch(url);

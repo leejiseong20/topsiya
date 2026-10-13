@@ -1,5 +1,6 @@
 package com.topsiya.common;
 
+import com.topsiya.lane.LaneAnalysisException;
 import com.topsiya.riot.RiotApiKeyMissingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RiotApiKeyMissingException.class)
     public ResponseEntity<ErrorResponse> handleMissingKey(RiotApiKeyMissingException e) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ErrorResponse(e.getMessage()));
+    }
+
+    @ExceptionHandler(LaneAnalysisException.class)
+    public ResponseEntity<ErrorResponse> handleLaneAnalysis(LaneAnalysisException e) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(new ErrorResponse(e.getMessage()));
     }
 

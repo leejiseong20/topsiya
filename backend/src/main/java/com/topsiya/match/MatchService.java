@@ -38,7 +38,7 @@ public class MatchService {
                 summaries.add(summary);
             }
         }
-        return new SummonerMatchesResponse(account.gameName(), account.tagLine(), summaries);
+        return new SummonerMatchesResponse(account.gameName(), account.tagLine(), account.puuid(), summaries);
     }
 
     /** 경기 상세에서 '나'를 찾아 요약을 만든다. 내가 없으면 null */

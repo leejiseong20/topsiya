@@ -2,6 +2,7 @@ package com.topsiya.riot;
 
 import com.topsiya.riot.dto.AccountDto;
 import com.topsiya.riot.dto.MatchDto;
+import com.topsiya.riot.dto.TimelineDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -50,6 +51,15 @@ public class RiotApiClient {
                 .uri("/lol/match/v5/matches/{matchId}", matchId)
                 .retrieve()
                 .body(MatchDto.class);
+    }
+
+    /** MATCH-V5: 경기 타임라인 (1분 단위 스냅샷 + 킬·와드·포탑 이벤트) */
+    public TimelineDto getTimeline(String matchId) {
+        requireApiKey();
+        return riotRestClient.get()
+                .uri("/lol/match/v5/matches/{matchId}/timeline", matchId)
+                .retrieve()
+                .body(TimelineDto.class);
     }
 
     private void requireApiKey() {

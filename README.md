@@ -197,7 +197,8 @@ npm run dev
 ### 현재 구현된 API
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| GET | `/api/summoners/{gameName}/{tagLine}/matches?count=10` | Riot ID로 최근 경기 목록 (최대 20개) |
+| GET | `/api/summoners/{gameName}/{tagLine}/matches?count=10` | Riot ID로 최근 경기 목록 (최대 20개). 응답의 `puuid`는 라인전 분석에 사용 |
+| GET | `/api/matches/{matchId}/lane?puuid=...` | 한 경기의 라인전 요약: 5·10·15분 CS·골드·레벨 격차, 분당 CS 격차, 가장 크게 손해 본 3분 구간, 20분까지 데스 상황(갱 여부·위치·직전 와드), 솔로킬, 포탑 방패, 1차 포탑, 와드 수. 3주차에 이 요약을 AI에 전달 |
 
 ---
 

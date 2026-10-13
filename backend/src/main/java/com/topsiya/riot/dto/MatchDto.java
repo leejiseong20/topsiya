@@ -31,10 +31,12 @@ public record MatchDto(Metadata metadata, Info info) {
 
     /**
      * @param teamPosition 라인 (TOP, JUNGLE, MIDDLE, BOTTOM, UTILITY). 칼바람 등은 빈 문자열
-     * @param teamId       100 = 블루팀, 200 = 레드팀
+     * @param teamId        100 = 블루팀, 200 = 레드팀
+     * @param participantId 1~10. 타임라인 데이터는 puuid 대신 이 번호로 참가자를 가리킨다
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Participant(
+            int participantId,
             String puuid,
             String championName,
             String teamPosition,
