@@ -27,3 +27,6 @@ Thumbs.db
 
 # 키를 임시로 적어둔 텍스트 파일
 *api_key*.txt
+
+# 개인 메모용 텍스트 파일
+lol_nickname_tag.txt
