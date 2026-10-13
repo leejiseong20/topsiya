@@ -111,7 +111,7 @@ export default function LanePanel({ matchId, puuid, champData }) {
             <dd>
               {report.soloKills} / {report.soloDeaths}
             </dd>
-            <dt>포탑 방패 획득 / 손실</dt>
+            <dt>1차 포탑 방패 획득 / 손실</dt>
             <dd>
               {report.platesTaken} / {report.platesLost}
             </dd>

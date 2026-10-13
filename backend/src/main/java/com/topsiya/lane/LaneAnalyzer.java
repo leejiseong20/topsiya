@@ -206,14 +206,39 @@ public final class LaneAnalyzer {
 
     // ---------------------------------------------------------------- 포탑·와드
 
-    /** ownerTeamId 팀이 내 라인에서 잃은 방패 수 */
+    /**
+     * 1차 포탑 좌표 (소환사의 협곡 고정 위치). 키는 "라인:포탑 주인 팀".
+     * 실제 경기 데이터의 BUILDING_KILL(OUTER_TURRET) 위치와 같은 값이다.
+     */
+    static final Map<String, Position> OUTER_TURRETS = Map.of(
+            "TOP_LANE:100", new Position(981, 10441),
+            "MID_LANE:100", new Position(5846, 6396),
+            "BOT_LANE:100", new Position(10504, 1029),
+            "TOP_LANE:200", new Position(4318, 13875),
+            "MID_LANE:200", new Position(8955, 8510),
+            "BOT_LANE:200", new Position(13866, 4505)
+    );
+    static final int TURRET_MATCH_DISTANCE = 600;
+
+    /**
+     * ownerTeamId 팀이 내 라인 1차 포탑에서 잃은 방패 수.
+     * TURRET_PLATE_DESTROYED 이벤트는 2차·억제기 포탑에서도 찍히기 때문에
+     * laneType 만으로 거르면 안 되고, 1차 포탑 위치에서 깨진 것만 센다.
+     */
     static int countPlates(List<Event> events, String laneType, int ownerTeamId) {
         if (laneType == null) return 0;
+        Position outer = OUTER_TURRETS.get(laneType + ":" + ownerTeamId);
+        if (outer == null) return 0;
         return (int) events.stream()
                 .filter(e -> "TURRET_PLATE_DESTROYED".equals(e.type()))
-                .filter(e -> laneType.equals(e.laneType()))
                 .filter(e -> e.teamId() != null && e.teamId() == ownerTeamId)
+                .filter(e -> isNear(e.position(), outer))
                 .count();
+    }
+
+    private static boolean isNear(Position a, Position b) {
+        if (a == null || b == null) return false;
+        return Math.abs(a.x() - b.x()) + Math.abs(a.y() - b.y()) <= TURRET_MATCH_DISTANCE;
     }
 
     /** ownerTeamId 팀의 내 라인 1차 포탑이 깨진 시각 */

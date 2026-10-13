@@ -72,7 +72,7 @@ class LaneAnalyzerTest {
 
         assertThat(report.soloKills()).isEqualTo(1);
         assertThat(report.soloDeaths()).isEqualTo(0);
-        assertThat(report.platesTaken()).isEqualTo(2);
+        assertThat(report.platesTaken()).isEqualTo(2);   // 2차 포탑 방패는 제외
         assertThat(report.platesLost()).isEqualTo(1);
         assertThat(report.myOuterTowerLostAt()).isEqualTo("14:00");
         assertThat(report.enemyOuterTowerDestroyedAt()).isNull();
@@ -133,6 +133,9 @@ class LaneAnalyzerTest {
             if (m == 11) events.add(plate(t, 200));
             if (m == 13) events.add(plate(t, 100));
             if (m == 14) events.add(tower(t, 100));
+            // 2차 포탑 방패 (실제 데이터에 이런 이벤트가 섞여 온다) → 세면 안 됨
+            if (m == 20) events.add(plateAt(t, 200, new Position(7943, 13411)));
+            if (m == 21) events.add(plateAt(t, 100, new Position(1512, 6699)));
             frames.add(new Frame(t, pf, events));
         }
         return new TimelineDto(new TimelineDto.Info(60_000, frames, List.of()));
@@ -146,8 +149,14 @@ class LaneAnalyzerTest {
         return new Event("WARD_PLACED", t, null, null, null, null, null, creator, "YELLOW_TRINKET", null, null, null, null);
     }
 
+    /** 탑 1차 포탑 방패 (포탑 주인 팀 기준 위치) */
     static Event plate(long t, int ownerTeam) {
-        return new Event("TURRET_PLATE_DESTROYED", t, null, 1, null, null, null, null, null, ownerTeam, null, "TOP_LANE", null);
+        Position outerTop = ownerTeam == 100 ? new Position(981, 10441) : new Position(4318, 13875);
+        return plateAt(t, ownerTeam, outerTop);
+    }
+
+    static Event plateAt(long t, int ownerTeam, Position pos) {
+        return new Event("TURRET_PLATE_DESTROYED", t, null, 1, null, null, pos, null, null, ownerTeam, null, "TOP_LANE", null);
     }
 
     static Event tower(long t, int ownerTeam) {
