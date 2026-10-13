@@ -509,7 +509,160 @@ body {
   font-size: 12px;
 }
 
+/* ---------- AI 코칭 ---------- */
+.coach {
+  margin-top: 16px;
+  border: 1px solid rgba(52, 211, 180, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(52, 211, 180, 0.08), var(--surface) 60%);
+  padding: 14px 16px;
+  font-size: 14px;
+}
+
+.coach--cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.coach--cta p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.coach--loading {
+  color: var(--muted);
+  text-align: center;
+}
+
+.coach__error {
+  color: var(--lose) !important;
+}
+
+.btn-coach {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #04120f;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.coach__badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.coach__summary {
+  margin: 10px 0 14px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.mistakes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mistake {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--lose);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.mistake__head {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.mistake__time {
+  font-weight: 700;
+  color: var(--lose);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mistake__what {
+  font-weight: 700;
+}
+
+.mistake__row {
+  display: flex;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.mistake__row em,
+.coach__good em,
+.coach__tip em {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+  min-width: 30px;
+}
+
+.mistake__row--fix {
+  color: var(--text);
+}
+
+.mistake__row--fix em {
+  color: var(--accent);
+}
+
+.coach__good {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.coach__good em {
+  color: var(--win);
+}
+
+.coach__good ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.coach__tip {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.coach__tip em {
+  color: var(--accent);
+  white-space: nowrap;
+}
+
 @media (max-width: 680px) {
+  .coach--cta { flex-direction: column; align-items: stretch; }
   .lane { padding: 14px; }
   .lane__grid { grid-template-columns: 1fr; }
   .tile__value { font-size: 17px; }

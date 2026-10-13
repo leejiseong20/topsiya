@@ -3,6 +3,7 @@ package com.topsiya.riot;
 import com.topsiya.riot.dto.AccountDto;
 import com.topsiya.riot.dto.MatchDto;
 import com.topsiya.riot.dto.TimelineDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -20,7 +21,7 @@ public class RiotApiClient {
     private final RestClient riotRestClient;
     private final RiotProperties properties;
 
-    public RiotApiClient(RestClient riotRestClient, RiotProperties properties) {
+    public RiotApiClient(@Qualifier("riotRestClient") RestClient riotRestClient, RiotProperties properties) {
         this.riotRestClient = riotRestClient;
         this.properties = properties;
     }

@@ -1,5 +1,6 @@
 package com.topsiya.common;
 
+import com.topsiya.coach.CoachingException;
 import com.topsiya.lane.LaneAnalysisException;
 import com.topsiya.riot.RiotApiKeyMissingException;
 import org.slf4j.Logger;
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RiotApiKeyMissingException.class)
     public ResponseEntity<ErrorResponse> handleMissingKey(RiotApiKeyMissingException e) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ErrorResponse(e.getMessage()));
+    }
+
+    @ExceptionHandler(CoachingException.class)
+    public ResponseEntity<ErrorResponse> handleCoaching(CoachingException e) {
+        return ResponseEntity.status(e.getStatus())
                 .body(new ErrorResponse(e.getMessage()));
     }
 
@@ -48,7 +55,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceAccessException.class)
     public ResponseEntity<ErrorResponse> handleNetwork(ResourceAccessException e) {
-        log.warn("Riot API 연결 실패", e);
+        log.warn("외부 API 연결 실패", e);
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(new ErrorResponse("Riot API 서버에 연결할 수 없어요. 인터넷 연결을 확인하세요."));
     }

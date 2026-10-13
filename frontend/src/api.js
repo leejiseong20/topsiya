@@ -29,10 +29,18 @@ export function fetchLaneReport(matchId, puuid) {
   );
 }
 
-async function getJson(url) {
+/** AI 코칭 리포트 생성 (호출할 때마다 비용이 들 수 있어서 버튼을 눌렀을 때만 부른다) */
+export function requestCoaching(matchId, puuid) {
+  return getJson(
+    `/api/matches/${encodeURIComponent(matchId)}/coach?puuid=${encodeURIComponent(puuid)}`,
+    { method: 'POST' },
+  );
+}
+
+async function getJson(url, options) {
   let response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, options);
   } catch {
     throw new Error('서버에 연결할 수 없어요. 백엔드가 실행 중인지 확인하세요.');
   }

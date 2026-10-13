@@ -49,8 +49,8 @@ LoL 랭크 게임 유저는 라인전에서 진 이유를 스스로 분석하기
 flowchart LR
     U[사용자] --> FE[React 프론트엔드]
     FE -->|REST API| BE[Spring Boot 백엔드]
-    BE -->|1. 경기 데이터 요청| RIOT[Riot API]
-    BE -->|3. 분석 요청| AI[OpenAI API]
+    BE -->|경기 데이터 요청| RIOT[Riot API]
+    BE -->|코칭 리포트 요청| AI[OpenAI API]
     BE <-->|리포트 저장/조회| DB[(MySQL)]
     DD[Data Dragon<br/>챔피언 이미지] --> FE
 ```
@@ -84,7 +84,7 @@ flowchart LR
 | Frontend | React, Vite, Axios |
 | Backend | Java 17, Spring Boot 3, Spring Data JPA, RestClient |
 | Database | MySQL (개발 중에는 H2) |
-| 외부 API | Riot Games API, OpenAI API, Data Dragon |
+| 외부 API | Riot Games API, OpenAI Responses API (Structured Outputs), Data Dragon |
 | 협업/배포 | GitHub |
 
 ---
@@ -176,7 +176,11 @@ AI에게 원본 데이터를 통째로 주지 않는다. 40분 경기의 타임�
 ```yaml
 riot:
   api-key: RGAPI-xxxxxxxx
+openai:
+  api-key: sk-xxxxxxxx
 ```
+
+사용할 OpenAI 모델은 `application.yml`의 `openai.model`에서 바꿀 수 있다.
 
 `application-secret.yml`은 `.gitignore`에 포함되어 GitHub에 올라가지 않는다. **API 키는 절대 코드에 직접 쓰지 않는다.**
 
@@ -198,7 +202,8 @@ npm run dev
 | 메서드 | 경로 | 설명 |
 |---|---|---|
 | GET | `/api/summoners/{gameName}/{tagLine}/matches?count=10` | Riot ID로 최근 경기 목록 (최대 20개). 응답의 `puuid`는 라인전 분석에 사용 |
-| GET | `/api/matches/{matchId}/lane?puuid=...` | 한 경기의 라인전 요약: 5·10·15분 CS·골드·레벨 격차, 분당 CS 격차, 가장 크게 손해 본 3분 구간, 20분까지 데스 상황(갱 여부·위치·직전 와드), 솔로킬, 포탑 방패, 1차 포탑, 와드 수. 3주차에 이 요약을 AI에 전달 |
+| GET | `/api/matches/{matchId}/lane?puuid=...` | 한 경기의 라인전 요약: 5·10·15분 CS·골드·레벨 격차, 분당 CS 격차, 가장 크게 손해 본 3분 구간, 20분까지 데스 상황(갱 여부·위치·직전 와드), 솔로킬, 포탑 방패, 1차 포탑, 와드 수 |
+| POST | `/api/matches/{matchId}/coach?puuid=...` | 위 라인전 요약을 OpenAI에 보내 AI 코칭 리포트(요약, 실수 1~3개의 시점·원인·개선, 잘한 점, 다음 경기 팁)를 생성. 같은 경기는 서버 메모리에 저장해 재사용 |
 
 ---
 

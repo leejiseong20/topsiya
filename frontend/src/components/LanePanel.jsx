@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchLaneReport } from '../api.js';
 import { championKoName } from '../ddragon.js';
 import CsDiffChart from './CsDiffChart.jsx';
+import CoachCard from './CoachCard.jsx';
 
 function signed(n) {
   return n > 0 ? `+${n}` : `${n}`;
@@ -124,7 +125,7 @@ export default function LanePanel({ matchId, puuid, champData }) {
         </div>
       </div>
 
-      <p className="lane__note">AI 코칭 리포트는 다음 단계에서 이 데이터를 바탕으로 추가돼요.</p>
+      <CoachCard matchId={matchId} puuid={puuid} />
     </section>
   );
 }

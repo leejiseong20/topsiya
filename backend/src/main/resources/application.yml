@@ -12,3 +12,10 @@ riot:
   # application-secret.yml 이 없으면 RIOT_API_KEY 환경변수를 사용
   api-key: ${RIOT_API_KEY:}
   regional-host: asia.api.riotgames.com
+
+openai:
+  # application-secret.yml 이 없으면 OPENAI_API_KEY 환경변수를 사용
+  api-key: ${OPENAI_API_KEY:}
+  base-url: https://api.openai.com
+  # 수업 예제 코드와 같은 모델. 키에서 못 쓰는 모델이면 여기만 바꾸면 된다
+  model: gpt-5.6-luna
