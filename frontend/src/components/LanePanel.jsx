@@ -4,13 +4,17 @@ import { championKoName } from '../ddragon.js';
 import CsDiffChart from './CsDiffChart.jsx';
 import CoachCard from './CoachCard.jsx';
 
-function signed(n) {
-  return n > 0 ? `+${n}` : `${n}`;
+/** 화면용 부호: 양수 +, 음수는 진짜 마이너스 기호 */
+export function signed(n) {
+  if (n === null || n === undefined) return '-';
+  if (n > 0) return `+${n}`;
+  if (n < 0) return `−${Math.abs(n)}`;
+  return '0';
 }
 
 function tone(n) {
-  if (n > 0) return 'up';
-  if (n < 0) return 'down';
+  if (n > 0) return 'good';
+  if (n < 0) return 'bad';
   return 'even';
 }
 
@@ -28,12 +32,12 @@ export default function LanePanel({ matchId, puuid, champData }) {
     };
   }, [matchId, puuid]);
 
-  if (error) return <div className="lane lane--error">{error}</div>;
+  if (error) return <div className="panel panel--msg notice--error">{error}</div>;
   if (!report) {
     return (
-      <div className="lane lane--loading">
-        <div className="loading__bar" />
-        경기 타임라인을 분석하는 중…
+      <div className="panel panel--msg">
+        <div className="waiting__bar" />
+        경기 기록을 살펴보는 중이에요
       </div>
     );
   }
@@ -41,91 +45,83 @@ export default function LanePanel({ matchId, puuid, champData }) {
   const name = (c) => championKoName(champData, c);
 
   return (
-    <section className="lane">
-      <header className="lane__head">
-        <h3>
-          라인전 분석 <span>{name(report.myChampion)} vs {name(report.opponentChampion)}</span>
-        </h3>
-      </header>
+    <section className="panel">
+      <CoachCard matchId={matchId} puuid={puuid} />
 
-      <div className="lane__checkpoints">
+      <h4 className="panel__title">
+        라인전 숫자로 보기 <span>{name(report.myChampion)} vs {name(report.opponentChampion)}</span>
+      </h4>
+
+      <div className="checkpoints">
         {report.checkpoints.map((c) => (
-          <div key={c.minute} className="tile">
-            <div className="tile__label">{c.minute}분</div>
-            <div className={`tile__value tile__value--${tone(c.csDiff)}`}>CS {signed(c.csDiff)}</div>
-            <div className="tile__sub">
-              골드 {signed(c.goldDiff)} · 레벨 {signed(c.levelDiff)}
-            </div>
+          <div key={c.minute} className="checkpoint">
+            <span className="checkpoint__min">{c.minute}분 CS</span>
+            <strong className={`checkpoint__val checkpoint__val--${tone(c.csDiff)}`}>
+              {signed(c.csDiff)}
+            </strong>
+            <span className="checkpoint__sub">골드 {signed(c.goldDiff)}</span>
           </div>
         ))}
       </div>
 
-      <div className="lane__chart">
-        <div className="lane__chart-title">
-          분당 CS 격차
-          {report.biggestCsSwing && (
-            <span className="lane__swing">
-              {report.biggestCsSwing.fromMinute}~{report.biggestCsSwing.toMinute}분에{' '}
-              {Math.abs(report.biggestCsSwing.change)}개 손해
-            </span>
-          )}
-        </div>
-        <CsDiffChart
-          timeline={report.timeline}
-          swing={report.biggestCsSwing}
-          deaths={report.deaths}
-        />
+      <div className="chart-box">
+        {report.biggestCsSwing && (
+          <p className="chart-box__note">
+            {report.biggestCsSwing.fromMinute}~{report.biggestCsSwing.toMinute}분에 CS{' '}
+            {Math.abs(report.biggestCsSwing.change)}개를 가장 크게 잃었어요
+          </p>
+        )}
+        <CsDiffChart timeline={report.timeline} swing={report.biggestCsSwing} deaths={report.deaths} />
       </div>
 
-      <div className="lane__grid">
-        <div>
-          <h4>20분까지 데스 {report.deaths.length}회</h4>
-          {report.deaths.length === 0 ? (
-            <p className="lane__empty">라인전 동안 한 번도 죽지 않았어요.</p>
-          ) : (
-            <ul className="deaths">
-              {report.deaths.map((d) => (
-                <li key={d.seconds}>
-                  <span className="deaths__time">{d.time}</span>
-                  <span>
-                    {name(d.killer)}
-                    {d.assisters.length > 0 && ` + ${d.assisters.map(name).join(', ')}`}
-                  </span>
-                  <span className="deaths__tags">
-                    <em className={`tag ${d.type === '라인 교전' ? '' : 'tag--warn'}`}>{d.type}</em>
-                    <em className="tag">{d.zone}</em>
-                    <em className={`tag ${d.myWardsLast2Min === 0 ? 'tag--warn' : ''}`}>
-                      직전 와드 {d.myWardsLast2Min}
-                    </em>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      <h4 className="panel__title">
+        죽은 순간 <span>20분까지 {report.deaths.length}번</span>
+      </h4>
+      {report.deaths.length === 0 ? (
+        <p className="quiet">20분까지 한 번도 안 죽었어요.</p>
+      ) : (
+        <ul className="deaths">
+          {report.deaths.map((d) => (
+            <li key={d.seconds} className="death">
+              <span className="death__time">{d.time}</span>
+              <span className={`death__type ${d.type === '라인 교전' ? '' : 'death__type--alert'}`}>
+                {d.type}
+              </span>
+              <span className="death__who">
+                {[d.killer, ...d.assisters].map(name).join(', ')}
+              </span>
+              {d.myWardsLast2Min === 0 && <span className="death__ward">와드 없음</span>}
+            </li>
+          ))}
+        </ul>
+      )}
 
-        <div>
-          <h4>라인 지표</h4>
-          <dl className="facts">
-            <dt>솔로킬 / 솔로데스 (15분)</dt>
-            <dd>
-              {report.soloKills} / {report.soloDeaths}
-            </dd>
-            <dt>1차 포탑 방패 획득 / 손실</dt>
-            <dd>
-              {report.platesTaken} / {report.platesLost}
-            </dd>
-            <dt>내 1차 포탑 파괴</dt>
-            <dd>{report.myOuterTowerLostAt ?? '안 깨짐'}</dd>
-            <dt>상대 1차 포탑 파괴</dt>
-            <dd>{report.enemyOuterTowerDestroyedAt ?? '못 깸'}</dd>
-            <dt>15분까지 와드 설치</dt>
-            <dd>{report.wardsPlacedBefore15}개</dd>
-          </dl>
-        </div>
-      </div>
-
-      <CoachCard matchId={matchId} puuid={puuid} />
+      <details className="more">
+        <summary>라인 지표 더 보기</summary>
+        <dl className="facts">
+          <dt>솔로킬 / 솔로데스 (15분까지)</dt>
+          <dd>
+            {report.soloKills} / {report.soloDeaths}
+          </dd>
+          <dt>1차 포탑 방패 획득 / 손실</dt>
+          <dd>
+            {report.platesTaken} / {report.platesLost}
+          </dd>
+          <dt>내 1차 포탑이 깨진 시각</dt>
+          <dd>{report.myOuterTowerLostAt ?? '안 깨짐'}</dd>
+          <dt>상대 1차 포탑을 깬 시각</dt>
+          <dd>{report.enemyOuterTowerDestroyedAt ?? '못 깸'}</dd>
+          <dt>15분까지 설치한 와드</dt>
+          <dd>{report.wardsPlacedBefore15}개</dd>
+        </dl>
+        <ul className="deaths deaths--detail">
+          {report.deaths.map((d) => (
+            <li key={d.seconds}>
+              {d.time} {d.zone}에서, 죽기 전 2분 동안 와드 {d.myWardsLast2Min}개
+            </li>
+          ))}
+        </ul>
+      </details>
     </section>
   );
 }

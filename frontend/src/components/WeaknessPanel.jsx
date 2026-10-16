@@ -1,17 +1,13 @@
 import { useMemo, useState } from 'react';
 import { requestWeaknesses } from '../api.js';
 import { positionLabel } from '../format.js';
+import { Mistake } from './CoachCard.jsx';
+import { signed } from './LanePanel.jsx';
 
 const MIN_GAMES = 2;
 
-function signed(n) {
-  if (n === null || n === undefined) return '-';
-  return n > 0 ? `+${n}` : `${n}`;
-}
-
-/** 최근 경기 중 같은 포지션 경기를 묶어 반복되는 약점을 분석한다 */
+/** 같은 포지션 경기를 묶어, 여러 판에 걸쳐 반복되는 실수를 찾는다 */
 export default function WeaknessPanel({ matches, puuid }) {
-  // 포지션별로 분석 가능한(맞라인 있는) 경기 모으기
   const groups = useMemo(() => {
     const map = new Map();
     matches
@@ -41,132 +37,119 @@ export default function WeaknessPanel({ matches, puuid }) {
   if (groups.length === 0) return null;
 
   const current = selected ? results[selected] : null;
-  const currentCount = groups.find(([p]) => p === selected)?.[1].length ?? 0;
+  const count = groups.find(([p]) => p === selected)?.[1].length ?? 0;
 
   return (
-    <section className="weak">
-      <div className="weak__head">
-        <div>
-          <h3>반복되는 약점 찾기</h3>
-          <p>같은 포지션 경기를 묶어서, 여러 판에 걸쳐 반복되는 습관을 찾아요.</p>
-        </div>
-        <div className="weak__tabs">
+    <section className="habit">
+      <div className="habit__head">
+        <h3>내가 자꾸 반복하는 실수</h3>
+        <div className="habit__tabs" role="group" aria-label="포지션 선택">
           {groups.map(([position, ids]) => (
             <button
               key={position}
-              className={`weak__tab ${selected === position ? 'weak__tab--on' : ''}`}
+              className={`chip ${selected === position ? 'chip--on' : ''}`}
               disabled={ids.length < MIN_GAMES}
               onClick={() => analyze(position, ids)}
-              title={ids.length < MIN_GAMES ? `${MIN_GAMES}경기 이상 필요해요` : ''}
+              title={ids.length < MIN_GAMES ? `${MIN_GAMES}경기 이상 필요해요` : undefined}
             >
-              {positionLabel(position)} <span>{ids.length}경기</span>
+              {positionLabel(position)} {ids.length}판
             </button>
           ))}
         </div>
       </div>
 
+      {!current && <p className="quiet">포지션을 고르면 최근 경기를 묶어서 찾아드려요.</p>}
+
       {current?.status === 'loading' && (
-        <div className="weak__loading">
-          <div className="loading__bar" />
-          {positionLabel(selected)} {currentCount}경기 데이터를 모아 분석하는 중이에요… (최대 1분)
+        <div className="panel--msg">
+          <div className="waiting__bar" />
+          {positionLabel(selected)} {count}판을 모아 보는 중이에요. 1분까지 걸릴 수 있어요
         </div>
       )}
 
-      {current?.status === 'error' && <p className="weak__error">{current.error}</p>}
+      {current?.status === 'error' && <p className="notice notice--error">{current.error}</p>}
 
-      {current?.status === 'done' && <WeaknessResult data={current.data} />}
+      {current?.status === 'done' && <HabitResult data={current.data} />}
     </section>
   );
 }
 
-function WeaknessResult({ data }) {
+function HabitResult({ data }) {
   const { stats, ai } = data;
+  const [first, ...rest] = ai.weaknesses;
   const noWardRate =
     stats.deathsBefore15 > 0
       ? Math.round((stats.deathsWithNoWardBefore15 / stats.deathsBefore15) * 100)
       : null;
 
-  const tiles = [
-    {
-      label: '15분 평균 CS 격차',
-      value: signed(stats.avgCsDiffAt15),
-      sub: `${stats.gamesBehindInCsAt15}경기에서 뒤처짐`,
-      bad: stats.avgCsDiffAt15 !== null && stats.avgCsDiffAt15 < 0,
-    },
-    {
-      label: '15분 전 평균 데스',
-      value: `${stats.avgDeathsBefore15}회`,
-      sub: `정글 ${stats.jungleGankDeathsBefore15} · 로밍 ${stats.roamDeathsBefore15} · 솔로 ${stats.soloDeaths}`,
-      bad: stats.avgDeathsBefore15 >= 1.5,
-    },
-    {
-      label: '와드 없이 죽은 비율',
-      value: noWardRate === null ? '-' : `${noWardRate}%`,
-      sub: `${stats.deathsWithNoWardBefore15} / ${stats.deathsBefore15} 데스`,
-      bad: noWardRate !== null && noWardRate >= 50,
-    },
-    {
-      label: '1차 포탑 먼저 잃음',
-      value: `${stats.gamesLostOuterTowerFirst} / ${stats.games}`,
-      sub: `방패 평균 ${stats.avgPlatesTaken} 획득 · ${stats.avgPlatesLost} 손실`,
-      bad: stats.gamesLostOuterTowerFirst * 2 > stats.games,
-    },
-  ];
-
   return (
-    <div className="weak__result">
-      <div className="weak__tiles">
-        {tiles.map((t) => (
-          <div key={t.label} className="tile">
-            <div className="tile__label">{t.label}</div>
-            <div className={`tile__value ${t.bad ? 'tile__value--down' : ''}`}>{t.value}</div>
-            <div className="tile__sub">{t.sub}</div>
-          </div>
-        ))}
+    <div className="habit__result">
+      <p className="coach__label">다음 몇 판은 이것만</p>
+      <p className="coach__headline">{ai.focus}</p>
+
+      <div className="numbers">
+        <Stat label="15분 CS 차이" value={signed(stats.avgCsDiffAt15)} bad={stats.avgCsDiffAt15 < 0} />
+        <Stat label="15분 전 데스" value={`${stats.avgDeathsBefore15}번`} bad={stats.avgDeathsBefore15 >= 1.5} />
+        <Stat
+          label="와드 없이 죽음"
+          value={noWardRate === null ? '-' : `${noWardRate}%`}
+          bad={noWardRate !== null && noWardRate >= 50}
+        />
       </div>
 
-      <div className="coach">
-        <div className="coach__badge">AI 분석 · {stats.games}경기 ({stats.wins}승)</div>
-        <p className="coach__summary">{ai.summary}</p>
+      {first && <Mistake mistake={first} big badge={first.frequency} />}
 
-        {ai.weaknesses.length > 0 && (
-          <ol className="mistakes">
-            {ai.weaknesses.map((w, i) => (
-              <li key={i} className="mistake">
-                <div className="mistake__head">
-                  <span className="mistake__time">약점 {i + 1}</span>
-                  <span className="mistake__what">{w.title}</span>
-                  <span className="weak__freq">{w.frequency}</span>
-                </div>
-                <div className="mistake__row">
-                  <em>근거</em>
-                  <span>{w.evidence}</span>
-                </div>
-                <div className="mistake__row mistake__row--fix">
-                  <em>개선</em>
-                  <span>{w.fix}</span>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
+      {rest.length > 0 && (
+        <details className="more">
+          <summary>다른 습관 {rest.length}개 더 보기</summary>
+          {rest.map((w, i) => (
+            <Mistake key={i} mistake={w} badge={w.frequency} />
+          ))}
+        </details>
+      )}
 
-        {ai.strengths.length > 0 && (
-          <div className="coach__good">
-            <em>강점</em>
-            <ul>
-              {ai.strengths.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="coach__tip">
-          <em>다음 몇 판 집중</em>
-          <span>{ai.focus}</span>
+      {ai.strengths.length > 0 && (
+        <div className="good">
+          <span className="good__label">잘하고 있는 점</span>
+          {ai.strengths.map((s, i) => (
+            <p key={i}>{s}</p>
+          ))}
         </div>
-      </div>
+      )}
+
+      <details className="more">
+        <summary>자세한 통계 보기</summary>
+        <p className="quiet">{ai.summary}</p>
+        <dl className="facts">
+          <dt>분석한 경기</dt>
+          <dd>
+            {stats.games}판 ({stats.wins}승)
+          </dd>
+          <dt>15분 전 데스 중 정글 갱 / 로밍</dt>
+          <dd>
+            {stats.jungleGankDeathsBefore15} / {stats.roamDeathsBefore15}
+          </dd>
+          <dt>솔로킬 / 솔로데스</dt>
+          <dd>
+            {stats.soloKills} / {stats.soloDeaths}
+          </dd>
+          <dt>1차 포탑을 먼저 잃은 판</dt>
+          <dd>
+            {stats.gamesLostOuterTowerFirst} / {stats.games}
+          </dd>
+          <dt>15분까지 평균 와드</dt>
+          <dd>{stats.avgWardsBefore15}개</dd>
+        </dl>
+      </details>
+    </div>
+  );
+}
+
+function Stat({ label, value, bad }) {
+  return (
+    <div className="number">
+      <strong className={bad ? 'number__val--bad' : ''}>{value}</strong>
+      <span>{label}</span>
     </div>
   );
 }

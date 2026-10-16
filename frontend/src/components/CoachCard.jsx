@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { requestCoaching } from '../api.js';
 
-/** 라인전 분석 패널 아래의 AI 코칭 영역. 버튼을 눌러야 AI 를 부른다 */
+/** 분석 패널 맨 위의 AI 코칭. 결론(다음 판 할 일)부터 보여주고, 자세한 건 접어둔다 */
 export default function CoachCard({ matchId, puuid }) {
   const [status, setStatus] = useState('idle'); // idle | loading | done | error
   const [report, setReport] = useState(null);
@@ -21,69 +21,72 @@ export default function CoachCard({ matchId, puuid }) {
 
   if (status === 'idle' || status === 'error') {
     return (
-      <div className="coach coach--cta">
-        <div>
-          <strong>AI 코칭 리포트</strong>
-          <p>위 데이터를 바탕으로 AI가 실수 구간, 원인, 개선 방법을 정리해 줘요.</p>
-          {status === 'error' && <p className="coach__error">{error}</p>}
-        </div>
-        <button className="btn-coach" onClick={handleClick}>
+      <div className="coach-cta">
+        <p>AI 코치가 이 판의 라인전을 복기해 드려요</p>
+        <button className="btn-primary" onClick={handleClick}>
           {status === 'error' ? '다시 시도' : 'AI 코칭 받기'}
         </button>
+        {status === 'error' && <p className="notice notice--error">{error}</p>}
       </div>
     );
   }
 
   if (status === 'loading') {
     return (
-      <div className="coach coach--loading">
-        <div className="loading__bar" />
-        AI가 경기를 복기하는 중이에요… (10~30초)
+      <div className="coach-cta coach-cta--wait">
+        <div className="waiting__bar" />
+        코치가 경기를 보고 있어요. 10~30초 걸려요
       </div>
     );
   }
 
+  const [first, ...rest] = report.mistakes;
+
   return (
     <section className="coach">
-      <div className="coach__badge">AI 코칭</div>
+      <p className="coach__label">다음 판엔 이것만</p>
+      <p className="coach__headline">{report.nextGameTip}</p>
       <p className="coach__summary">{report.summary}</p>
 
-      {report.mistakes.length > 0 && (
-        <ol className="mistakes">
-          {report.mistakes.map((m, i) => (
-            <li key={i} className="mistake">
-              <div className="mistake__head">
-                <span className="mistake__time">{m.time}</span>
-                <span className="mistake__what">{m.what}</span>
-              </div>
-              <div className="mistake__row">
-                <em>원인</em>
-                <span>{m.why}</span>
-              </div>
-              <div className="mistake__row mistake__row--fix">
-                <em>개선</em>
-                <span>{m.fix}</span>
-              </div>
-            </li>
+      {first && <Mistake mistake={first} big />}
+
+      {rest.length > 0 && (
+        <details className="more">
+          <summary>다른 실수 {rest.length}개 더 보기</summary>
+          {rest.map((m, i) => (
+            <Mistake key={i} mistake={m} />
           ))}
-        </ol>
+        </details>
       )}
 
       {report.goodPoints.length > 0 && (
-        <div className="coach__good">
-          <em>잘한 점</em>
-          <ul>
-            {report.goodPoints.map((g, i) => (
-              <li key={i}>{g}</li>
-            ))}
-          </ul>
+        <div className="good">
+          <span className="good__label">잘한 점</span>
+          {report.goodPoints.map((g, i) => (
+            <p key={i}>{g}</p>
+          ))}
         </div>
       )}
-
-      <div className="coach__tip">
-        <em>다음 경기 팁</em>
-        <span>{report.nextGameTip}</span>
-      </div>
     </section>
+  );
+}
+
+/** 실수 하나: 무엇을 → 이렇게 해보세요. 원인은 눌러야 보인다 */
+export function Mistake({ mistake, big = false, badge }) {
+  return (
+    <article className={`mistake ${big ? 'mistake--big' : ''}`}>
+      <div className="mistake__top">
+        <span className="mistake__when">{badge ?? mistake.time}</span>
+        <h5>{mistake.what ?? mistake.title}</h5>
+      </div>
+      <p className="mistake__fix">
+        <b>이렇게 해보세요</b>
+        {mistake.fix}
+      </p>
+      <details className="mistake__why">
+        <summary>왜 그런가요?</summary>
+        <p>{mistake.why ?? mistake.evidence}</p>
+      </details>
+    </article>
   );
 }
