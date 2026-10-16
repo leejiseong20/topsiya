@@ -22,7 +22,8 @@ public record WeaknessStats(
         /* 15분까지 데스 */
         double avgDeathsBefore15,
         int deathsBefore15,
-        int gankedDeathsBefore15,
+        int jungleGankDeathsBefore15,
+        int roamDeathsBefore15,
         int deathsWithNoWardBefore15,
         int deathsInEnemyZoneBefore15,
         int soloDeaths,
@@ -53,7 +54,8 @@ public record WeaknessStats(
             Integer csDiffAt10,
             Integer csDiffAt15,
             int deathsBefore15,
-            int gankedDeathsBefore15,
+            int jungleGankDeathsBefore15,
+            int roamDeathsBefore15,
             int deathsWithNoWardBefore15,
             String biggestSwing
     ) {

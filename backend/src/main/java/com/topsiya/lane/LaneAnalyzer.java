@@ -32,6 +32,14 @@ public final class LaneAnalyzer {
     static final int SWING_WINDOW_MINUTES = 3;
     static final long WARD_LOOKBACK_MS = 120_000;
     static final int[] CHECKPOINT_MINUTES = {5, 10, 15};
+    static final int TEAMFIGHT_MIN_ENEMIES = 4;
+
+    static final String TYPE_LANE = "라인 교전";
+    static final String TYPE_GANK = "정글 갱";
+    static final String TYPE_ROAM = "상대 로밍";
+    static final String TYPE_GANK_ROAM = "정글+로밍";
+    static final String TYPE_TEAMFIGHT = "한타";
+    static final String TYPE_STRUCTURE = "포탑/미니언";
 
     private LaneAnalyzer() {
     }
@@ -161,17 +169,23 @@ public final class LaneAnalyzer {
                               Map<Integer, Participant> byId) {
         List<Death> result = new ArrayList<>();
         int myId = me.participantId();
+        Set<Integer> enemyJunglerIds = byId.values().stream()
+                .filter(p -> p.teamId() != me.teamId() && "JUNGLE".equals(p.teamPosition()))
+                .map(Participant::participantId)
+                .collect(Collectors.toSet());
 
         for (Event e : events) {
             if (!"CHAMPION_KILL".equals(e.type())) continue;
             if (e.victimId() == null || e.victimId() != myId) continue;
             if (e.timestamp() > DETAIL_END_MINUTE * 60_000L) continue;
 
-            List<Integer> involved = new ArrayList<>();
+            Set<Integer> involved = new HashSet<>();
             if (e.killerId() != null && e.killerId() > 0) involved.add(e.killerId());
             if (e.assistingParticipantIds() != null) involved.addAll(e.assistingParticipantIds());
 
-            boolean ganked = involved.stream().anyMatch(id -> !laneEnemyIds.contains(id));
+            boolean jungle = involved.stream().anyMatch(enemyJunglerIds::contains);
+            boolean roam = involved.stream()
+                    .anyMatch(id -> !laneEnemyIds.contains(id) && !enemyJunglerIds.contains(id));
 
             List<String> assisters = e.assistingParticipantIds() == null ? List.of()
                     : e.assistingParticipantIds().stream().map(id -> championName(byId, id)).toList();
@@ -181,12 +195,27 @@ public final class LaneAnalyzer {
                     e.timestamp() / 1000,
                     e.killerId() == null || e.killerId() == 0 ? "포탑/미니언" : championName(byId, e.killerId()),
                     assisters,
-                    ganked,
+                    deathType(involved.size(), jungle, roam),
+                    jungle,
+                    roam,
                     zoneOf(e.position(), me.teamId()),
                     countWards(events, myId, e.timestamp() - WARD_LOOKBACK_MS, e.timestamp())
             ));
         }
         return result;
+    }
+
+    /**
+     * 데스에 참여한 적 구성으로 유형을 정한다.
+     * 정글이 오면 "갱", 다른 라인 라이너가 내려오면 "로밍"으로 구분한다.
+     */
+    static String deathType(int enemiesInvolved, boolean jungle, boolean roam) {
+        if (enemiesInvolved == 0) return TYPE_STRUCTURE;
+        if (enemiesInvolved >= TEAMFIGHT_MIN_ENEMIES) return TYPE_TEAMFIGHT;
+        if (jungle && roam) return TYPE_GANK_ROAM;
+        if (jungle) return TYPE_GANK;
+        if (roam) return TYPE_ROAM;
+        return TYPE_LANE;
     }
 
     /** killerId 가 victimId 를 어시스트 없이 잡은 횟수 (라인전 구간) */

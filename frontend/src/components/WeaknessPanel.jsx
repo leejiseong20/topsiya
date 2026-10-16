@@ -96,7 +96,7 @@ function WeaknessResult({ data }) {
     {
       label: '15분 전 평균 데스',
       value: `${stats.avgDeathsBefore15}회`,
-      sub: `갱 ${stats.gankedDeathsBefore15} · 솔로 ${stats.soloDeaths}`,
+      sub: `정글 ${stats.jungleGankDeathsBefore15} · 로밍 ${stats.roamDeathsBefore15} · 솔로 ${stats.soloDeaths}`,
       bad: stats.avgDeathsBefore15 >= 1.5,
     },
     {

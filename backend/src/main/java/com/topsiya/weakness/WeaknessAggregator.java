@@ -28,7 +28,8 @@ public final class WeaknessAggregator {
         List<Integer> gold15 = new ArrayList<>();
 
         int deathsBefore15 = 0;
-        int ganked = 0;
+        int jungleGank = 0;
+        int roam = 0;
         int noWard = 0;
         int enemyZone = 0;
         int soloDeaths = 0;
@@ -50,11 +51,13 @@ public final class WeaknessAggregator {
             List<Death> early = r.deaths().stream()
                     .filter(d -> d.seconds() <= LANE_PHASE_END_SECONDS)
                     .toList();
-            int gameGanked = (int) early.stream().filter(Death::ganked).count();
+            int gameJungle = (int) early.stream().filter(Death::jungleInvolved).count();
+            int gameRoam = (int) early.stream().filter(Death::roamInvolved).count();
             int gameNoWard = (int) early.stream().filter(d -> d.myWardsLast2Min() == 0).count();
 
             deathsBefore15 += early.size();
-            ganked += gameGanked;
+            jungleGank += gameJungle;
+            roam += gameRoam;
             noWard += gameNoWard;
             enemyZone += (int) early.stream().filter(d -> "상대 진영".equals(d.zone())).count();
             soloDeaths += r.soloDeaths();
@@ -77,7 +80,8 @@ public final class WeaknessAggregator {
                     at10,
                     at15,
                     early.size(),
-                    gameGanked,
+                    gameJungle,
+                    gameRoam,
                     gameNoWard,
                     r.biggestCsSwing() == null ? null
                             : r.biggestCsSwing().fromMinute() + "~" + r.biggestCsSwing().toMinute()
@@ -97,7 +101,8 @@ public final class WeaknessAggregator {
                 behindAt15,
                 round1(games == 0 ? 0 : (double) deathsBefore15 / games),
                 deathsBefore15,
-                ganked,
+                jungleGank,
+                roam,
                 noWard,
                 enemyZone,
                 soloDeaths,

@@ -28,7 +28,8 @@ class WeaknessAggregatorTest {
         // 15분(900초)까지 데스만: A 1번, B 2번, C 0번 (C의 데스는 16분)
         assertThat(s.deathsBefore15()).isEqualTo(3);
         assertThat(s.avgDeathsBefore15()).isEqualTo(1.0);
-        assertThat(s.gankedDeathsBefore15()).isEqualTo(2);
+        assertThat(s.jungleGankDeathsBefore15()).isEqualTo(2);
+        assertThat(s.roamDeathsBefore15()).isEqualTo(1);
         assertThat(s.deathsWithNoWardBefore15()).isEqualTo(2);
         assertThat(s.deathsInEnemyZoneBefore15()).isEqualTo(2);
 
@@ -63,16 +64,16 @@ class WeaknessAggregatorTest {
         return report("A", false,
                 List.of(cp(10, 10, 200), cp(15, -6, -120)),
                 new Swing(12, 15, -18),
-                List.of(death(800, true, "상대 진영", 0)),
+                List.of(death(800, true, false, "상대 진영", 0)),
                 1, 0, 2, 2, 1, "14:00", null);
     }
 
-    /** 패배. 10분 -20 → 15분 -30, 데스 2번(갱 1 + 솔로 1) */
+    /** 패배. 10분 -20 → 15분 -30, 데스 2번(로밍 1 + 정글 갱 1) */
     static LaneReport gameB() {
         return report("B", false,
                 List.of(cp(10, -20, -500), cp(15, -30, -900)),
                 new Swing(13, 16, -12),
-                List.of(death(400, false, "우리 진영", 1), death(700, true, "상대 진영", 0)),
+                List.of(death(400, false, true, "우리 진영", 1), death(700, true, false, "상대 진영", 0)),
                 0, 1, 4, 1, 4, "12:00", "18:30");
     }
 
@@ -81,7 +82,7 @@ class WeaknessAggregatorTest {
         return report("C", true,
                 List.of(cp(5, 3, 50)),
                 null,
-                List.of(death(960, false, "강가", 2)),
+                List.of(death(960, false, false, "강가", 2)),
                 0, 0, 3, 0, 2, null, "8:30");
     }
 
@@ -96,8 +97,9 @@ class WeaknessAggregatorTest {
         return new Checkpoint(minute, 0, 0, csDiff, goldDiff, 0);
     }
 
-    static Death death(long seconds, boolean ganked, String zone, int wards) {
+    static Death death(long seconds, boolean jungle, boolean roam, String zone, int wards) {
+        String type = jungle && roam ? "정글+로밍" : jungle ? "정글 갱" : roam ? "상대 로밍" : "라인 교전";
         return new Death(seconds / 60 + ":" + String.format("%02d", seconds % 60), seconds, "Kennen",
-                List.of(), ganked, zone, wards);
+                List.of(), type, jungle, roam, zone, wards);
     }
 }

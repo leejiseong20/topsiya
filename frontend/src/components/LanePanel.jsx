@@ -92,7 +92,7 @@ export default function LanePanel({ matchId, puuid, champData }) {
                     {d.assisters.length > 0 && ` + ${d.assisters.map(name).join(', ')}`}
                   </span>
                   <span className="deaths__tags">
-                    {d.ganked && <em className="tag tag--warn">갱</em>}
+                    <em className={`tag ${d.type === '라인 교전' ? '' : 'tag--warn'}`}>{d.type}</em>
                     <em className="tag">{d.zone}</em>
                     <em className={`tag ${d.myWardsLast2Min === 0 ? 'tag--warn' : ''}`}>
                       직전 와드 {d.myWardsLast2Min}

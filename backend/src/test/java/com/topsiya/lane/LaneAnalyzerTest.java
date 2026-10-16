@@ -61,7 +61,9 @@ class LaneAnalyzerTest {
         assertThat(death.time()).isEqualTo("13:20");
         assertThat(death.killer()).isEqualTo("Vi");
         assertThat(death.assisters()).containsExactly("Kennen");
-        assertThat(death.ganked()).isTrue();             // 정글이 참여
+        assertThat(death.type()).isEqualTo("정글 갱");    // 정글 바이 + 라인 상대 케넨
+        assertThat(death.jungleInvolved()).isTrue();
+        assertThat(death.roamInvolved()).isFalse();
         assertThat(death.zone()).isEqualTo("상대 진영");
         assertThat(death.myWardsLast2Min()).isEqualTo(1); // 12:30 와드만 2분 안
     }
@@ -77,6 +79,42 @@ class LaneAnalyzerTest {
         assertThat(report.myOuterTowerLostAt()).isEqualTo("14:00");
         assertThat(report.enemyOuterTowerDestroyedAt()).isNull();
         assertThat(report.wardsPlacedBefore15()).isEqualTo(2);
+    }
+
+    @Test
+    void 데스_유형을_갱_로밍_한타로_구분한다() {
+        // 서폿 기준: 라인 상대 = 상대 원딜(9)·서폿(10), 정글 = 7, 미드 = 8, 탑 = 6
+        Participant me = new Participant(5, ME, "TahmKench", "UTILITY", 100, true, 0, 0, 0, 0, 0, 10);
+        List<Participant> all = List.of(
+                me,
+                new Participant(6, "t", "Ornn", "TOP", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(7, "j", "Viego", "JUNGLE", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(8, "m", "TwistedFate", "MIDDLE", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(9, "a", "Kaisa", "BOTTOM", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(10, "s", "Swain", "UTILITY", 200, false, 0, 0, 0, 0, 0, 10)
+        );
+        Map<Integer, Participant> byId = new HashMap<>();
+        all.forEach(p -> byId.put(p.participantId(), p));
+        Position pos = new Position(10000, 2000);
+
+        List<Event> events = List.of(
+                kill(175_000, 9, 5, List.of(10), pos),          // 2:55 카이사+스웨인 → 라인 교전
+                kill(300_000, 7, 5, List.of(), pos),             // 5:00 비에고 → 정글 갱
+                kill(420_000, 8, 5, List.of(9), pos),            // 7:00 트페+카이사 → 상대 로밍
+                kill(1_108_000, 7, 5, List.of(6, 8), pos),       // 18:28 비에고+오른+트페 → 정글+로밍
+                kill(1_150_000, 9, 5, List.of(6, 7, 8), pos),    // 19:10 4명 → 한타
+                kill(1_190_000, 0, 5, List.of(), pos)            // 19:50 포탑
+        );
+
+        List<LaneReport.Death> deaths =
+                LaneAnalyzer.deaths(events, me, LaneAnalyzer.laneEnemyIds(all, me), byId);
+
+        assertThat(deaths).extracting(LaneReport.Death::type).containsExactly(
+                "라인 교전", "정글 갱", "상대 로밍", "정글+로밍", "한타", "포탑/미니언");
+        assertThat(deaths.get(2).jungleInvolved()).isFalse();
+        assertThat(deaths.get(2).roamInvolved()).isTrue();
+        assertThat(deaths.get(3).killer()).isEqualTo("Viego");
+        assertThat(deaths.get(3).assisters()).containsExactly("Ornn", "TwistedFate");
     }
 
     @Test

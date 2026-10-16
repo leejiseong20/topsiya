@@ -55,7 +55,9 @@ public record LaneReport(
     }
 
     /**
-     * @param ganked          라인 상대가 아닌 적(정글, 다른 라인)이 킬/어시스트에 참여
+     * @param type            데스 유형: "라인 교전" / "정글 갱" / "상대 로밍" / "정글+로밍" / "한타" / "포탑/미니언"
+     * @param jungleInvolved  상대 정글이 킬/어시스트에 참여
+     * @param roamInvolved    라인 상대도 정글도 아닌 적(다른 라인 라이너)이 참여
      * @param zone            "우리 진영" / "강가" / "상대 진영" (대략적인 구분)
      * @param myWardsLast2Min 죽기 전 2분 동안 내가 설치한 와드 수
      */
@@ -64,7 +66,9 @@ public record LaneReport(
             long seconds,
             String killer,
             List<String> assisters,
-            boolean ganked,
+            String type,
+            boolean jungleInvolved,
+            boolean roamInvolved,
             String zone,
             int myWardsLast2Min
     ) {

@@ -103,7 +103,7 @@ class CoachServiceTest {
                 List.of(new LaneReport.Checkpoint(10, 80, 70, 10, 200, 0)),
                 List.of(new LaneReport.MinutePoint(10, 80, 70, 10, 200)),
                 new LaneReport.Swing(12, 15, -18),
-                List.of(new LaneReport.Death("13:20", 800, "Vi", List.of("Kennen"), true, "상대 진영", 0)),
+                List.of(new LaneReport.Death("13:20", 800, "Vi", List.of("Kennen"), "정글 갱", true, false, "상대 진영", 0)),
                 1, 0, 2, 1, "14:00", null, 2
         );
     }
