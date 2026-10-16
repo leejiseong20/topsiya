@@ -204,6 +204,7 @@ npm run dev
 | GET | `/api/summoners/{gameName}/{tagLine}/matches?count=10` | Riot ID로 최근 경기 목록 (최대 20개). 응답의 `puuid`는 라인전 분석에 사용 |
 | GET | `/api/matches/{matchId}/lane?puuid=...` | 한 경기의 라인전 요약: 5·10·15분 CS·골드·레벨 격차, 분당 CS 격차, 가장 크게 손해 본 3분 구간, 20분까지 데스 상황(갱 여부·위치·직전 와드), 솔로킬, 포탑 방패, 1차 포탑, 와드 수 |
 | POST | `/api/matches/{matchId}/coach?puuid=...` | 위 라인전 요약을 OpenAI에 보내 AI 코칭 리포트(요약, 실수 1~3개의 시점·원인·개선, 잘한 점, 다음 경기 팁)를 생성. 같은 경기는 서버 메모리에 저장해 재사용 |
+| POST | `/api/weaknesses` | 같은 포지션 경기 2~10개(`{puuid, position, matchIds}`)를 묶어 반복 약점 분석. 서버가 통계(평균 CS 격차, 15분 전 데스·갱·와드 없는 데스, 포탑 등)를 계산하고 AI는 1번만 호출해 약점 Top 3·강점·집중할 것을 정리 |
 
 ---
 

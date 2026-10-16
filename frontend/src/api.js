@@ -37,6 +37,15 @@ export function requestCoaching(matchId, puuid) {
   );
 }
 
+/** 같은 포지션의 여러 경기를 묶어 반복 약점 분석 */
+export function requestWeaknesses(puuid, position, matchIds) {
+  return getJson('/api/weaknesses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ puuid, position, matchIds }),
+  });
+}
+
 async function getJson(url, options) {
   let response;
   try {

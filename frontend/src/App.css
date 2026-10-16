@@ -509,6 +509,100 @@ body {
   font-size: 12px;
 }
 
+/* ---------- 반복 약점 ---------- */
+.weak {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.weak__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.weak__head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.weak__head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.weak__tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.weak__tab {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.weak__tab span {
+  font-weight: 400;
+  opacity: 0.8;
+  margin-left: 2px;
+}
+
+.weak__tab--on {
+  background: var(--accent);
+  color: #04120f;
+}
+
+.weak__tab:disabled {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.weak__loading {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.weak__error {
+  margin: 14px 0 0;
+  color: var(--lose);
+  font-size: 14px;
+}
+
+.weak__result {
+  margin-top: 16px;
+}
+
+.weak__tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.weak__freq {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 /* ---------- AI 코칭 ---------- */
 .coach {
   margin-top: 16px;
@@ -662,6 +756,9 @@ body {
 }
 
 @media (max-width: 680px) {
+  .weak__tiles { grid-template-columns: repeat(2, 1fr); }
+  .weak__freq { margin-left: 0; }
+  .mistake__head { flex-wrap: wrap; }
   .coach--cta { flex-direction: column; align-items: stretch; }
   .lane { padding: 14px; }
   .lane__grid { grid-template-columns: 1fr; }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchRecentMatches, parseRiotId } from './api.js';
 import { loadChampionData } from './ddragon.js';
 import MatchCard from './components/MatchCard.jsx';
+import WeaknessPanel from './components/WeaknessPanel.jsx';
 
 export default function App() {
   const [input, setInput] = useState('');
@@ -84,16 +85,19 @@ export default function App() {
           {result.matches.length === 0 ? (
             <p className="message">최근 경기 기록이 없어요.</p>
           ) : (
-            <div className="match-list">
+            <>
+              <WeaknessPanel key={result.puuid} matches={result.matches} puuid={result.puuid} />
+              <div className="match-list">
               {result.matches.map((match) => (
                 <MatchCard
                   key={match.matchId}
                   match={match}
                   puuid={result.puuid}
                   champData={champData}
-                />
-              ))}
-            </div>
+                  />
+                ))}
+              </div>
+            </>
           )}
         </main>
       )}
