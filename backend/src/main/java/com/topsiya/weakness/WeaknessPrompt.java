@@ -1,5 +1,7 @@
 package com.topsiya.weakness;
 
+import com.topsiya.goal.SuggestedGoal;
+
 import java.util.List;
 import java.util.Map;
 
@@ -40,14 +42,15 @@ final class WeaknessPrompt {
             - gamesLostOuterTowerFirst: 내 1차 포탑을 상대보다 먼저 잃은 경기 수
             - swingStarts: 경기마다 CS 격차가 가장 크게 벌어진 3분 구간이 몇 분대에 시작됐는지 분포
             - position 이 UTILITY 면 서포터, BOTTOM 이면 원딜 기준으로 해석한다. 서포터는 CS 보다 데스·시야를 중요하게 본다.
-            """;
+
+            """ + SuggestedGoal.PROMPT_GUIDE;
 
     private static final Map<String, Object> STRING = Map.of("type", "string");
 
     static final Map<String, Object> RESPONSE_SCHEMA = Map.of(
             "type", "object",
             "additionalProperties", false,
-            "required", List.of("summary", "weaknesses", "strengths", "focus"),
+            "required", List.of("summary", "weaknesses", "strengths", "focus", "goal"),
             "properties", Map.of(
                     "summary", STRING,
                     "weaknesses", Map.of(
@@ -65,7 +68,8 @@ final class WeaknessPrompt {
                             )
                     ),
                     "strengths", Map.of("type", "array", "items", STRING),
-                    "focus", STRING
+                    "focus", STRING,
+                    "goal", SuggestedGoal.schema()
             )
     );
 }

@@ -13,6 +13,9 @@ backend/out/
 *.log
 HELP.md
 
+# 저장된 Riot 응답·AI 결과 (내 경기 데이터)
+local-data/
+
 # ===== Node / React =====
 frontend/node_modules/
 frontend/dist/

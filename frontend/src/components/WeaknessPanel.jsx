@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { requestWeaknesses } from '../api.js';
-import { positionLabel } from '../format.js';
+import { positionLabel, signed } from '../format.js';
 import { Mistake } from './CoachCard.jsx';
-import { signed } from './LanePanel.jsx';
+import { GoalButton } from './GoalPanel.jsx';
+import VerifyNote from './VerifyNote.jsx';
 
 const MIN_GAMES = 2;
 
@@ -69,12 +70,18 @@ export default function WeaknessPanel({ matches, puuid }) {
 
       {current?.status === 'error' && <p className="notice notice--error">{current.error}</p>}
 
-      {current?.status === 'done' && <HabitResult data={current.data} />}
+      {current?.status === 'done' && (
+        <HabitResult
+          data={current.data}
+          position={selected}
+          newestMatchId={groups.find(([p]) => p === selected)?.[1][0]}
+        />
+      )}
     </section>
   );
 }
 
-function HabitResult({ data }) {
+function HabitResult({ data, position, newestMatchId }) {
   const { stats, ai } = data;
   const [first, ...rest] = ai.weaknesses;
   const noWardRate =
@@ -86,6 +93,9 @@ function HabitResult({ data }) {
     <div className="habit__result">
       <p className="coach__label">다음 몇 판은 이것만</p>
       <p className="coach__headline">{ai.focus}</p>
+      <GoalButton suggested={ai.goal} text={ai.focus} position={position} sourceMatchId={newestMatchId} />
+
+      <VerifyNote verification={data.verification} />
 
       <div className="numbers">
         <Stat label="15분 CS 차이" value={signed(stats.avgCsDiffAt15)} bad={stats.avgCsDiffAt15 < 0} />

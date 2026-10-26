@@ -7,14 +7,14 @@ import com.topsiya.coach.OpenAiClient;
 import com.topsiya.lane.LaneAnalysisException;
 import com.topsiya.lane.LaneReport;
 import com.topsiya.lane.LaneService;
+import com.topsiya.store.FileStore;
+import com.topsiya.verify.CheckedAnswer;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class WeaknessService {
@@ -26,13 +26,17 @@ public class WeaknessService {
     private final OpenAiClient openAiClient;
     private final ObjectMapper objectMapper;
 
-    /** 같은 경기 묶음을 다시 분석하면 AI 를 또 부르지 않는다 */
-    private final Map<String, WeaknessReport> cache = new ConcurrentHashMap<>();
+    /** 같은 경기 묶음을 다시 분석하면 AI 를 또 부르지 않는다 (파일 저장, 재시작해도 유지) */
+    private final FileStore store;
 
-    public WeaknessService(LaneService laneService, OpenAiClient openAiClient, ObjectMapper objectMapper) {
+    public static final String CATEGORY = "weakness";
+
+    public WeaknessService(LaneService laneService, OpenAiClient openAiClient, ObjectMapper objectMapper,
+                           FileStore store) {
         this.laneService = laneService;
         this.openAiClient = openAiClient;
         this.objectMapper = objectMapper;
+        this.store = store;
     }
 
     public WeaknessReport analyze(WeaknessRequest request) {
@@ -45,9 +49,9 @@ public class WeaknessService {
         }
 
         String key = request.puuid() + ":" + request.position() + ":" + new TreeSet<>(ids);
-        WeaknessReport cached = cache.get(key);
-        if (cached != null) {
-            return cached;
+        var saved = store.read(CATEGORY, key, WeaknessReport.class);
+        if (saved.isPresent()) {
+            return saved.get();
         }
 
         // 1) 경기마다 라인전 요약 (이미 분석한 경기는 LaneService 가 저장해 둔 것을 쓴다)
@@ -66,16 +70,16 @@ public class WeaknessService {
         // 2) 통계는 서버가 계산
         WeaknessStats stats = WeaknessAggregator.aggregate(request.position(), reports);
 
-        // 3) 해석만 AI 에게 (1번 호출)
-        String outputJson = openAiClient.createJsonResponse(
-                WeaknessPrompt.INSTRUCTIONS,
+        // 3) 해석만 AI 에게. AI 가 쓴 숫자가 통계와 안 맞으면 한 번 다시 쓰게 한다
+        CheckedAnswer<WeaknessReport.AiPart> checked = CheckedAnswer.ask(
                 toJson(stats),
-                "weakness_report",
-                WeaknessPrompt.RESPONSE_SCHEMA
+                input -> parse(openAiClient.createJsonResponse(
+                        WeaknessPrompt.INSTRUCTIONS, input, "weakness_report", WeaknessPrompt.RESPONSE_SCHEMA)),
+                draft -> WeaknessEvidence.verify(stats, draft, objectMapper)
         );
-        WeaknessReport report = new WeaknessReport(stats, parse(outputJson));
+        WeaknessReport report = new WeaknessReport(stats, checked.answer(), checked.verification(), checked.firstDraft());
 
-        cache.put(key, report);
+        store.write(CATEGORY, key, report);
         return report;
     }
 

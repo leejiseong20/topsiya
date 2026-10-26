@@ -1,5 +1,7 @@
 package com.topsiya.coach;
 
+import com.topsiya.goal.SuggestedGoal;
+
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +42,8 @@ final class CoachPrompt {
             - deaths[].zone 은 사망 위치를 대략 나눈 것이다 (우리 진영 / 강가 / 상대 진영).
             - platesTaken/platesLost 는 내 라인 포탑 방패 획득/손실 수다.
             - position 이 TOP 이 아니면 그 포지션 기준으로 코칭한다 (UTILITY = 서포터, BOTTOM = 원딜).
-            """;
+
+            """ + SuggestedGoal.PROMPT_GUIDE;
 
     private static final Map<String, Object> STRING = Map.of("type", "string");
 
@@ -48,7 +51,7 @@ final class CoachPrompt {
     static final Map<String, Object> RESPONSE_SCHEMA = Map.of(
             "type", "object",
             "additionalProperties", false,
-            "required", List.of("summary", "mistakes", "goodPoints", "nextGameTip"),
+            "required", List.of("summary", "mistakes", "goodPoints", "nextGameTip", "goal"),
             "properties", Map.of(
                     "summary", STRING,
                     "mistakes", Map.of(
@@ -66,7 +69,8 @@ final class CoachPrompt {
                             )
                     ),
                     "goodPoints", Map.of("type", "array", "items", STRING),
-                    "nextGameTip", STRING
+                    "nextGameTip", STRING,
+                    "goal", SuggestedGoal.schema()
             )
     );
 }

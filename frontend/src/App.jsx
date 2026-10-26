@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react';
-import { fetchRecentMatches, parseRiotId } from './api.js';
+import { fetchAppInfo, fetchRecentMatches, parseRiotId } from './api.js';
 import { loadChampionData } from './ddragon.js';
 import MatchCard from './components/MatchCard.jsx';
 import WeaknessPanel from './components/WeaknessPanel.jsx';
+import GoalPanel, { GoalProvider } from './components/GoalPanel.jsx';
+import EvalPage from './components/EvalPage.jsx';
+
+/** 주소 끝이 #eval 이면 정확도 측정 화면 */
+function useHash() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return hash;
+}
 
 export default function App() {
   const [input, setInput] = useState('');
@@ -10,6 +23,12 @@ export default function App() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [champData, setChampData] = useState({ version: null, names: {}, ids: {} });
+  const hash = useHash();
+  const [appInfo, setAppInfo] = useState({ devTools: false, demoMode: false });
+
+  useEffect(() => {
+    fetchAppInfo().then(setAppInfo).catch(() => {});
+  }, []);
 
   useEffect(() => {
     loadChampionData().then(setChampData);
@@ -37,6 +56,15 @@ export default function App() {
   }
 
   const searched = Boolean(result) || status === 'loading';
+
+  // 개발자 화면: 서버에서 dev-tools 를 켰을 때만
+  if (hash === '#eval' && appInfo.devTools) {
+    return (
+      <div className="page">
+        <EvalPage />
+      </div>
+    );
+  }
 
   return (
     <div className="page">
@@ -78,35 +106,42 @@ export default function App() {
       )}
 
       {status === 'done' && result && (
-        <main className="results">
-          <h2 className="player">
-            {result.gameName}
-            <span>#{result.tagLine}</span>
-          </h2>
+        <GoalProvider puuid={result.puuid}>
+          <main className="results">
+            <h2 className="player">
+              {result.gameName}
+              <span>#{result.tagLine}</span>
+            </h2>
 
-          {result.matches.length === 0 ? (
-            <p className="notice">최근 경기 기록이 없어요.</p>
-          ) : (
-            <>
-              <WeaknessPanel key={result.puuid} matches={result.matches} puuid={result.puuid} />
+            {result.matches.length === 0 ? (
+              <p className="notice">최근 경기 기록이 없어요.</p>
+            ) : (
+              <>
+                <GoalPanel champData={champData} />
+                <WeaknessPanel key={result.puuid} matches={result.matches} puuid={result.puuid} />
 
-              <h3 className="section-title">최근 {result.matches.length}경기</h3>
-              <div className="match-list">
-                {result.matches.map((match) => (
-                  <MatchCard
-                    key={match.matchId}
-                    match={match}
-                    puuid={result.puuid}
-                    champData={champData}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </main>
+                <h3 className="section-title">최근 {result.matches.length}경기</h3>
+                <div className="match-list">
+                  {result.matches.map((match) => (
+                    <MatchCard
+                      key={match.matchId}
+                      match={match}
+                      puuid={result.puuid}
+                      champData={champData}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </main>
+        </GoalProvider>
       )}
 
-      <footer className="footer">탑시야는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</footer>
+      <footer className="footer">
+        {appInfo.devTools && <a href="#eval">개발자: AI 답변 정확도</a>}
+        {appInfo.demoMode && <span className="footer__demo">데모 모드 · 저장된 데이터로 동작 중</span>}
+        <span>탑시야는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</span>
+      </footer>
     </div>
   );
 }

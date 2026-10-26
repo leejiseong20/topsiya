@@ -4,7 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.topsiya.lane.LaneReport;
 import com.topsiya.lane.LaneService;
+import com.topsiya.store.FileStore;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
 
 import java.util.List;
 
@@ -22,6 +26,13 @@ import static org.mockito.Mockito.when;
 class CoachServiceTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @TempDir
+    Path dir;
+
+    private FileStore store() {
+        return new FileStore(dir, objectMapper);
+    }
 
     private static final String AI_JSON = """
             {"summary":"10분까지 앞섰지만 12분 이후 갱으로 역전당했다.",
@@ -63,7 +74,7 @@ class CoachServiceTest {
         when(openAiClient.createJsonResponse(anyString(), anyString(), eq("coaching_report"), anyMap()))
                 .thenReturn(AI_JSON);
 
-        CoachService service = new CoachService(laneService, openAiClient, objectMapper);
+        CoachService service = new CoachService(laneService, openAiClient, objectMapper, store());
         CoachingReport report = service.coach("KR_1", "p");
 
         assertThat(report.mistakes()).hasSize(1);
@@ -82,7 +93,7 @@ class CoachServiceTest {
         when(openAiClient.createJsonResponse(anyString(), anyString(), anyString(), anyMap()))
                 .thenReturn(AI_JSON);
 
-        CoachService service = new CoachService(laneService, openAiClient, objectMapper);
+        CoachService service = new CoachService(laneService, openAiClient, objectMapper, store());
         service.coach("KR_1", "p");
         service.coach("KR_1", "p");
 
@@ -90,8 +101,42 @@ class CoachServiceTest {
     }
 
     @Test
+    void 서버를_재시작해도_저장된_코칭을_쓴다() {
+        LaneService laneService = mock(LaneService.class);
+        OpenAiClient openAiClient = mock(OpenAiClient.class);
+        when(laneService.analyze("KR_1", "p")).thenReturn(sampleLaneReport());
+        when(openAiClient.createJsonResponse(anyString(), anyString(), anyString(), anyMap()))
+                .thenReturn(AI_JSON);
+
+        new CoachService(laneService, openAiClient, objectMapper, store()).coach("KR_1", "p");
+        // 같은 폴더를 쓰는 새 서비스 = 재시작한 서버
+        CoachingReport again = new CoachService(laneService, openAiClient, objectMapper, store()).coach("KR_1", "p");
+
+        assertThat(again.nextGameTip()).isEqualTo("라인을 밀었으면 정글 위치부터 확인하자.");
+        verify(openAiClient, times(1)).createJsonResponse(anyString(), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    void 데이터에_없는_시각을_쓰면_한_번_다시_쓰게_한다() {
+        LaneService laneService = mock(LaneService.class);
+        OpenAiClient openAiClient = mock(OpenAiClient.class);
+        when(laneService.analyze("KR_1", "p")).thenReturn(sampleLaneReport());
+        String wrong = AI_JSON.replace("\"time\":\"13:20\"", "\"time\":\"9:40\"");
+        when(openAiClient.createJsonResponse(anyString(), anyString(), anyString(), anyMap()))
+                .thenReturn(wrong, AI_JSON);
+
+        CoachingReport report = new CoachService(laneService, openAiClient, objectMapper, store()).coach("KR_1", "p");
+
+        assertThat(report.mistakes().get(0).time()).isEqualTo("13:20");
+        assertThat(report.verification().allMatched()).isTrue();
+        assertThat(report.firstDraft().unmatched()).anyMatch(u -> u.contains("9:40"));
+        // 두 번째 요청에는 무엇이 틀렸는지가 들어간다
+        verify(openAiClient).createJsonResponse(anyString(), contains("9:40"), anyString(), anyMap());
+    }
+
+    @Test
     void 깨진_AI_응답은_오류() {
-        CoachService service = new CoachService(mock(LaneService.class), mock(OpenAiClient.class), objectMapper);
+        CoachService service = new CoachService(mock(LaneService.class), mock(OpenAiClient.class), objectMapper, store());
 
         assertThatThrownBy(() -> service.parse("not json"))
                 .isInstanceOf(CoachingException.class);

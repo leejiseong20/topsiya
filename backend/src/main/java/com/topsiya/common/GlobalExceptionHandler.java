@@ -2,6 +2,7 @@ package com.topsiya.common;
 
 import com.topsiya.coach.CoachingException;
 import com.topsiya.lane.LaneAnalysisException;
+import com.topsiya.riot.DemoDataMissingException;
 import com.topsiya.riot.RiotApiKeyMissingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RiotApiKeyMissingException.class)
     public ResponseEntity<ErrorResponse> handleMissingKey(RiotApiKeyMissingException e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ErrorResponse(e.getMessage()));
+    }
+
+    @ExceptionHandler(DemoDataMissingException.class)
+    public ResponseEntity<ErrorResponse> handleDemoMissing(DemoDataMissingException e) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ErrorResponse(e.getMessage()));
     }
@@ -57,6 +64,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNetwork(ResourceAccessException e) {
         log.warn("외부 API 연결 실패", e);
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(new ErrorResponse("Riot API 서버에 연결할 수 없어요. 인터넷 연결을 확인하세요."));
+                .body(new ErrorResponse("Riot API 서버에 연결할 수 없어요. 인터넷 연결을 확인하세요. "
+                        + "(한 번이라도 본 소환사·경기는 저장돼 있어서 계속 볼 수 있어요)"));
     }
 }

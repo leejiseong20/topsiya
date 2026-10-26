@@ -1,5 +1,6 @@
 // Data Dragon: Riot 이 제공하는 챔피언 이름·이미지 (API 키 불필요)
-const DDRAGON = 'https://ddragon.leagueoflegends.com';
+// 백엔드가 대신 받아서 저장해 두므로, 인터넷이 끊겨도 한 번 본 아이콘은 나온다
+const DDRAGON = '/api/ddragon';
 
 let cache = null;
 
@@ -7,9 +8,9 @@ let cache = null;
 export async function loadChampionData() {
   if (cache) return cache;
   try {
-    const versions = await fetch(`${DDRAGON}/api/versions.json`).then((r) => r.json());
+    const versions = await fetch(`${DDRAGON}/versions.json`).then((r) => r.json());
     const version = versions[0];
-    const json = await fetch(`${DDRAGON}/cdn/${version}/data/ko_KR/champion.json`).then((r) =>
+    const json = await fetch(`${DDRAGON}/${version}/champion.json`).then((r) =>
       r.json(),
     );
     const names = {};
@@ -37,5 +38,5 @@ export function championKoName(data, championName) {
 
 export function championIconUrl(data, championName) {
   if (!data.version || !championName) return null;
-  return `${DDRAGON}/cdn/${data.version}/img/champion/${normalizeId(data, championName)}.png`;
+  return `${DDRAGON}/${data.version}/icon/${normalizeId(data, championName)}`;
 }

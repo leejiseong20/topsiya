@@ -42,7 +42,7 @@ public class MatchService {
     }
 
     /** 경기 상세에서 '나'를 찾아 요약을 만든다. 내가 없으면 null */
-    static MatchSummary toSummary(MatchDto match, String myPuuid) {
+    public static MatchSummary toSummary(MatchDto match, String myPuuid) {
         if (match == null || match.info() == null || match.info().participants() == null) {
             return null;
         }

@@ -49,7 +49,12 @@ export default function MatchCard({ match, puuid, champData }) {
         )}
       </div>
 
-      {open && <LanePanel matchId={match.matchId} puuid={puuid} champData={champData} />}
+      {open && <LanePanel
+          matchId={match.matchId}
+          puuid={puuid}
+          position={match.position}
+          champData={champData}
+        />}
     </div>
   );
 }

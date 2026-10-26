@@ -4,13 +4,9 @@ import { championKoName } from '../ddragon.js';
 import CsDiffChart from './CsDiffChart.jsx';
 import CoachCard from './CoachCard.jsx';
 
-/** 화면용 부호: 양수 +, 음수는 진짜 마이너스 기호 */
-export function signed(n) {
-  if (n === null || n === undefined) return '-';
-  if (n > 0) return `+${n}`;
-  if (n < 0) return `−${Math.abs(n)}`;
-  return '0';
-}
+import { signed } from '../format.js';
+
+export { signed };
 
 function tone(n) {
   if (n > 0) return 'good';
@@ -18,7 +14,7 @@ function tone(n) {
   return 'even';
 }
 
-export default function LanePanel({ matchId, puuid, champData }) {
+export default function LanePanel({ matchId, puuid, position, champData }) {
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
 
@@ -46,7 +42,7 @@ export default function LanePanel({ matchId, puuid, champData }) {
 
   return (
     <section className="panel">
-      <CoachCard matchId={matchId} puuid={puuid} />
+      <CoachCard matchId={matchId} puuid={puuid} position={position} />
 
       <h4 className="panel__title">
         라인전 숫자로 보기 <span>{name(report.myChampion)} vs {name(report.opponentChampion)}</span>

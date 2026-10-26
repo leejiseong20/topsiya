@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { requestCoaching } from '../api.js';
+import { GoalButton } from './GoalPanel.jsx';
+import VerifyNote from './VerifyNote.jsx';
 
 /** 분석 패널 맨 위의 AI 코칭. 결론(다음 판 할 일)부터 보여주고, 자세한 건 접어둔다 */
-export default function CoachCard({ matchId, puuid }) {
+export default function CoachCard({ matchId, puuid, position }) {
   const [status, setStatus] = useState('idle'); // idle | loading | done | error
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
@@ -46,7 +48,14 @@ export default function CoachCard({ matchId, puuid }) {
     <section className="coach">
       <p className="coach__label">다음 판엔 이것만</p>
       <p className="coach__headline">{report.nextGameTip}</p>
+      <GoalButton
+        suggested={report.goal}
+        text={report.nextGameTip}
+        position={position}
+        sourceMatchId={matchId}
+      />
       <p className="coach__summary">{report.summary}</p>
+      <VerifyNote verification={report.verification} />
 
       {first && <Mistake mistake={first} big />}
 

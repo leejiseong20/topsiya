@@ -16,6 +16,14 @@ const QUEUE_LABEL = {
   1700: '아레나',
 };
 
+/** 화면용 부호: 양수 +, 음수는 진짜 마이너스 기호 */
+export function signed(n) {
+  if (n === null || n === undefined) return '-';
+  if (n > 0) return `+${n}`;
+  if (n < 0) return `−${Math.abs(n)}`;
+  return '0';
+}
+
 export const positionLabel = (p) => POSITION_LABEL[p] ?? '-';
 export const queueLabel = (q) => QUEUE_LABEL[q] ?? '기타';
 

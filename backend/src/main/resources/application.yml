@@ -19,3 +19,13 @@ openai:
   base-url: https://api.openai.com
   # 수업 예제 코드와 같은 모델. 키에서 못 쓰는 모델이면 여기만 바꾸면 된다
   model: gpt-5.6-luna
+
+topsiya:
+  # Riot 응답·AI 결과를 저장하는 폴더. 지우면 처음부터 다시 받는다
+  data-dir: local-data
+  # 발표 시연용: true 면 인터넷 없이 저장된 데이터만으로 동작한다
+  #   켜는 법: 환경변수 TOPSIYA_DEMO=true 또는 아래 값을 true 로
+  demo-mode: ${TOPSIYA_DEMO:false}
+  # 개발자용 화면(AI 답변 정확도 측정)을 연다. 일반 사용자에게는 false
+  #   켜는 법: application-secret.yml 에 topsiya.dev-tools: true 또는 환경변수 TOPSIYA_DEV_TOOLS=true
+  dev-tools: ${TOPSIYA_DEV_TOOLS:false}

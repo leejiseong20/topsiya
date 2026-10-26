@@ -1,14 +1,17 @@
 package com.topsiya.weakness;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.topsiya.goal.SuggestedGoal;
+import com.topsiya.verify.Verification;
 
 import java.util.List;
 
 /**
  * 약점 분석 응답 = 서버가 계산한 통계(stats) + AI 해석(ai).
  * 화면에서 숫자는 stats 를, 문장은 ai 를 쓴다.
+ * verification·firstDraft: AI 글 속 숫자를 통계와 대조한 결과 (서버가 채운다)
  */
-public record WeaknessReport(WeaknessStats stats, AiPart ai) {
+public record WeaknessReport(WeaknessStats stats, AiPart ai, Verification verification, Verification firstDraft) {
 
     /** AI 가 만든 부분. 구조는 WeaknessPrompt.RESPONSE_SCHEMA 와 같다 */
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -16,7 +19,9 @@ public record WeaknessReport(WeaknessStats stats, AiPart ai) {
             String summary,
             List<Weakness> weaknesses,
             List<String> strengths,
-            String focus
+            String focus,
+            /* focus 를 다음 경기들에서 숫자로 확인하기 위한 지표 */
+            SuggestedGoal goal
     ) {
     }
 

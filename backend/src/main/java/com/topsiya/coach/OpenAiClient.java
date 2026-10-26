@@ -1,6 +1,7 @@
 package com.topsiya.coach;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.topsiya.store.AppProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,11 +25,13 @@ public class OpenAiClient {
 
     private final RestClient openAiRestClient;
     private final OpenAiProperties properties;
+    private final AppProperties app;
 
     public OpenAiClient(@Qualifier("openAiRestClient") RestClient openAiRestClient,
-                        OpenAiProperties properties) {
+                        OpenAiProperties properties, AppProperties app) {
         this.openAiRestClient = openAiRestClient;
         this.properties = properties;
+        this.app = app;
     }
 
     /**
@@ -36,6 +39,10 @@ public class OpenAiClient {
      */
     public String createJsonResponse(String instructions, String input,
                                      String schemaName, Map<String, Object> schema) {
+        if (app.demoMode()) {
+            throw new CoachingException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "데모 모드에서는 미리 분석해 둔 경기만 AI 결과를 볼 수 있어요.");
+        }
         if (!properties.hasApiKey()) {
             throw new CoachingException(HttpStatus.SERVICE_UNAVAILABLE,
                     "OpenAI API 키가 설정되지 않았어요. application-secret.yml 을 확인하세요.");

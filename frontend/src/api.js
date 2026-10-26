@@ -46,6 +46,44 @@ export function requestWeaknesses(puuid, position, matchIds) {
   });
 }
 
+/** 도전 중인 목표 + 그 뒤 경기들의 판정. 목표가 없으면 null */
+export function fetchGoal(puuid) {
+  return getJson(`/api/goals/${encodeURIComponent(puuid)}`);
+}
+
+/** 목표 정하기 (이미 있으면 바꾼다) */
+export function saveGoal(puuid, goal) {
+  return getJson(`/api/goals/${encodeURIComponent(puuid)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(goal),
+  });
+}
+
+export function clearGoal(puuid) {
+  return getJson(`/api/goals/${encodeURIComponent(puuid)}`, { method: 'DELETE' });
+}
+
+/** 서버 설정: { devTools, demoMode } */
+export function fetchAppInfo() {
+  return getJson('/api/app-info');
+}
+
+/** 검사기 시험: 틀린 내용을 일부러 심어 몇 개를 잡는지 (개발자용, AI 비용 없음) */
+export function fetchProbe() {
+  return getJson('/api/eval/probe');
+}
+
+/** AI 답변 정확도 통계 */
+export function fetchEval() {
+  return getJson('/api/eval');
+}
+
+/** 최근 경기들에 AI 코칭을 돌려 측정 (경기 수만큼 AI 비용) */
+export function runEval(puuid, count) {
+  return getJson(`/api/eval/run?puuid=${encodeURIComponent(puuid)}&count=${count}`, { method: 'POST' });
+}
+
 async function getJson(url, options) {
   let response;
   try {
@@ -64,5 +102,6 @@ async function getJson(url, options) {
     }
     throw new Error(message);
   }
+  if (response.status === 204) return null;
   return response.json();
 }

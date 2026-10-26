@@ -31,3 +31,21 @@ tasks.named('test') {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
+
+// 프로젝트 경로에 한글(예: D:\작업)이 있으면 Windows 에서 테스트 실행기가 클래스를 못 찾는다.
+// 그럴 때만 컴파일된 클래스를 영문 경로(임시 폴더)로 복사해서 거기서 테스트한다.
+def projectPathIsAscii = projectDir.absolutePath.chars().allMatch { it < 128 }
+if (!projectPathIsAscii) {
+    def asciiTestDir = file("${System.getProperty('java.io.tmpdir')}/topsiya-test-classes")
+    def copyTestClasses = tasks.register('copyTestClassesToAsciiPath', Sync) {
+        from sourceSets.main.output
+        from sourceSets.test.output
+        into asciiTestDir
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    tasks.named('test', Test) {
+        dependsOn copyTestClasses
+        testClassesDirs = files(asciiTestDir)
+        classpath = files(asciiTestDir) + configurations.testRuntimeClasspath
+    }
+}
