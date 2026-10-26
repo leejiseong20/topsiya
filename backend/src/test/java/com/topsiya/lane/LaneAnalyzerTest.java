@@ -68,6 +68,7 @@ class LaneAnalyzerTest {
         assertThat(death.myWardsLast2Min()).isEqualTo(1); // 12:30 와드만 2분 안
         assertThat(death.x()).isEqualTo(4000);            // 미니맵 표시용 좌표
         assertThat(death.y()).isEqualTo(12500);
+        assertThat(report.myTeamId()).isEqualTo(100);     // 블루 진영 (미니맵 진영 표시용)
     }
 
     @Test
@@ -117,6 +118,58 @@ class LaneAnalyzerTest {
         assertThat(deaths.get(2).roamInvolved()).isTrue();
         assertThat(deaths.get(3).killer()).isEqualTo("Viego");
         assertThat(deaths.get(3).assisters()).containsExactly("Ornn", "TwistedFate");
+    }
+
+    @Test
+    void 일차_포탑이_깨진_뒤에는_갱_로밍이_아니라_소규모_교전() {
+        Participant me = new Participant(5, ME, "TahmKench", "UTILITY", 100, true, 0, 0, 0, 0, 0, 10);
+        List<Participant> all = List.of(
+                me,
+                new Participant(6, "t", "Ornn", "TOP", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(7, "j", "Viego", "JUNGLE", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(8, "m", "TwistedFate", "MIDDLE", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(9, "a", "Kaisa", "BOTTOM", 200, false, 0, 0, 0, 0, 0, 10),
+                new Participant(10, "s", "Swain", "UTILITY", 200, false, 0, 0, 0, 0, 0, 10)
+        );
+        Map<Integer, Participant> byId = new HashMap<>();
+        all.forEach(p -> byId.put(p.participantId(), p));
+        Position pos = new Position(10000, 2000);
+        long laneEnd = 13 * 60_000L; // 13:00 바텀 1차 포탑 파괴
+
+        List<Event> events = List.of(
+                kill(420_000, 8, 5, List.of(9), pos),            // 7:00 라인전 중 → 상대 로밍
+                kill(1_108_000, 7, 5, List.of(6, 8), pos),       // 18:28 라인전 후 → 소규모 교전 (정글+로밍 아님)
+                kill(1_150_000, 9, 5, List.of(6, 7, 8), pos)     // 19:10 4명 → 한타는 그대로
+        );
+
+        List<LaneReport.Death> deaths =
+                LaneAnalyzer.deaths(events, me, LaneAnalyzer.laneEnemyIds(all, me), byId, laneEnd);
+
+        assertThat(deaths).extracting(LaneReport.Death::type).containsExactly("상대 로밍", "소규모 교전", "한타");
+        assertThat(deaths).extracting(LaneReport.Death::lanePhase).containsExactly(true, false, false);
+        assertThat(deaths.get(0).laneRoam()).isTrue();
+        assertThat(deaths.get(1).roamInvolved()).isTrue();   // 사실(다른 라이너 참여)은 남기고
+        assertThat(deaths.get(1).laneRoam()).isFalse();      // 로밍으로는 세지 않는다
+        assertThat(deaths.get(1).laneGank()).isFalse();
+    }
+
+    @Test
+    void 라인전_끝은_내_라인에서_처음_깨진_1차_포탑() {
+        List<Event> events = List.of(
+                tower(900_000, "MID_LANE", 200),   // 15:00 미드 → 탑 라이너와 무관
+                tower(1_020_000, "TOP_LANE", 100), // 17:00 우리 탑 1차
+                tower(780_000, "TOP_LANE", 200)    // 13:00 상대 탑 1차 ← 가장 먼저
+        );
+
+        Event end = LaneAnalyzer.laneEndEvent(events, "TOP_LANE");
+
+        assertThat(end.timestamp()).isEqualTo(780_000);
+        assertThat(LaneAnalyzer.laneEndEvent(events, null)).isNull(); // 정글은 라인 없음
+    }
+
+    private static Event tower(long t, String lane, int ownerTeam) {
+        return new Event("BUILDING_KILL", t, null, 1, null, List.of(), null, null, null, ownerTeam,
+                "TOWER_BUILDING", lane, "OUTER_TURRET");
     }
 
     @Test

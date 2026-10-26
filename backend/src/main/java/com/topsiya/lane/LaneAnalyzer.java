@@ -40,6 +40,8 @@ public final class LaneAnalyzer {
     static final String TYPE_GANK_ROAM = "정글+로밍";
     static final String TYPE_TEAMFIGHT = "한타";
     static final String TYPE_STRUCTURE = "포탑/미니언";
+    /** 라인전이 끝난 뒤(1차 포탑 파괴 후) 적 1~3명과 싸우다 죽음. 라인 스왑·운영 단계라 갱·로밍으로 부르지 않는다 */
+    static final String TYPE_SKIRMISH = "소규모 교전";
 
     private LaneAnalyzer() {
     }
@@ -80,6 +82,8 @@ public final class LaneAnalyzer {
         String laneType = laneTypeOf(position);
 
         List<MinutePoint> points = minutePoints(frames, myId, oppId);
+        Event laneEnd = laneEndEvent(events, laneType);
+        Long laneEndMs = laneEnd == null ? null : laneEnd.timestamp();
 
         return new LaneReport(
                 match.metadata() != null ? match.metadata().matchId() : null,
@@ -91,14 +95,18 @@ public final class LaneAnalyzer {
                 checkpoints(frames, myId, oppId),
                 points,
                 biggestCsSwing(points),
-                deaths(events, me, laneEnemyIds, byId),
+                deaths(events, me, laneEnemyIds, byId, laneEndMs),
                 countSoloKills(events, myId, oppId),
                 countSoloKills(events, oppId, myId),
                 countPlates(events, laneType, otherTeam(me.teamId())),
                 countPlates(events, laneType, me.teamId()),
                 outerTowerTime(events, laneType, me.teamId()),
                 outerTowerTime(events, laneType, otherTeam(me.teamId())),
-                countWards(events, myId, 0, LANE_PHASE_END_MINUTE * 60_000L)
+                countWards(events, myId, 0, LANE_PHASE_END_MINUTE * 60_000L),
+                me.teamId(),
+                laneEndMs == null ? null : laneEndMs / 1000,
+                laneEnd == null ? null
+                        : laneEnd.teamId() != null && laneEnd.teamId() == me.teamId() ? "우리 1차 포탑 파괴" : "상대 1차 포탑 파괴"
         );
     }
 
@@ -167,6 +175,12 @@ public final class LaneAnalyzer {
 
     static List<Death> deaths(List<Event> events, Participant me, Set<Integer> laneEnemyIds,
                               Map<Integer, Participant> byId) {
+        return deaths(events, me, laneEnemyIds, byId, null);
+    }
+
+    /** @param laneEndMs 라인전이 끝난 시각(ms). 이후 데스는 소규모 교전/한타로만 나눈다. null 이면 전부 라인전 */
+    static List<Death> deaths(List<Event> events, Participant me, Set<Integer> laneEnemyIds,
+                              Map<Integer, Participant> byId, Long laneEndMs) {
         List<Death> result = new ArrayList<>();
         int myId = me.participantId();
         Set<Integer> enemyJunglerIds = byId.values().stream()
@@ -187,6 +201,8 @@ public final class LaneAnalyzer {
             boolean roam = involved.stream()
                     .anyMatch(id -> !laneEnemyIds.contains(id) && !enemyJunglerIds.contains(id));
 
+            boolean lanePhase = laneEndMs == null || e.timestamp() < laneEndMs;
+
             List<String> assisters = e.assistingParticipantIds() == null ? List.of()
                     : e.assistingParticipantIds().stream().map(id -> championName(byId, id)).toList();
 
@@ -195,13 +211,14 @@ public final class LaneAnalyzer {
                     e.timestamp() / 1000,
                     e.killerId() == null || e.killerId() == 0 ? "포탑/미니언" : championName(byId, e.killerId()),
                     assisters,
-                    deathType(involved.size(), jungle, roam),
+                    deathType(involved.size(), jungle, roam, lanePhase),
                     jungle,
                     roam,
                     zoneOf(e.position(), me.teamId()),
                     countWards(events, myId, e.timestamp() - WARD_LOOKBACK_MS, e.timestamp()),
                     e.position() == null ? null : e.position().x(),
-                    e.position() == null ? null : e.position().y()
+                    e.position() == null ? null : e.position().y(),
+                    lanePhase
             ));
         }
         return result;
@@ -211,6 +228,11 @@ public final class LaneAnalyzer {
      * 데스에 참여한 적 구성으로 유형을 정한다.
      * 정글이 오면 "갱", 다른 라인 라이너가 내려오면 "로밍"으로 구분한다.
      */
+    static String deathType(int enemiesInvolved, boolean jungle, boolean roam, boolean lanePhase) {
+        if (!lanePhase && enemiesInvolved > 0 && enemiesInvolved < TEAMFIGHT_MIN_ENEMIES) return TYPE_SKIRMISH;
+        return deathType(enemiesInvolved, jungle, roam);
+    }
+
     static String deathType(int enemiesInvolved, boolean jungle, boolean roam) {
         if (enemiesInvolved == 0) return TYPE_STRUCTURE;
         if (enemiesInvolved >= TEAMFIGHT_MIN_ENEMIES) return TYPE_TEAMFIGHT;
@@ -273,6 +295,18 @@ public final class LaneAnalyzer {
     }
 
     /** ownerTeamId 팀의 내 라인 1차 포탑이 깨진 시각 */
+    /** 내 라인에서 처음 깨진 1차 포탑 (어느 팀 것이든) = 라인전이 끝난 순간. 정글 등 라인이 없으면 null */
+    static Event laneEndEvent(List<Event> events, String laneType) {
+        if (laneType == null) return null;
+        return events.stream()
+                .filter(e -> "BUILDING_KILL".equals(e.type()))
+                .filter(e -> "TOWER_BUILDING".equals(e.buildingType()))
+                .filter(e -> "OUTER_TURRET".equals(e.towerType()))
+                .filter(e -> laneType.equals(e.laneType()))
+                .min(java.util.Comparator.comparingLong(Event::timestamp))
+                .orElse(null);
+    }
+
     static String outerTowerTime(List<Event> events, String laneType, int ownerTeamId) {
         if (laneType == null) return null;
         return events.stream()
@@ -327,8 +361,8 @@ public final class LaneAnalyzer {
     static String zoneOf(Position pos, int myTeamId) {
         if (pos == null) return "알 수 없음";
         int sum = pos.x() + pos.y();
-        boolean blueSide = sum < 13_800;
-        boolean redSide = sum > 15_800;
+        boolean blueSide = sum < LaneReport.BLUE_SIDE_MAX;
+        boolean redSide = sum > LaneReport.RED_SIDE_MIN;
         if (!blueSide && !redSide) return "강가";
         boolean mySide = (myTeamId == 100) == blueSide;
         return mySide ? "우리 진영" : "상대 진영";

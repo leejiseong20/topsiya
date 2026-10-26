@@ -26,7 +26,7 @@ public final class CoachProbe {
     public record Result(String type, boolean caught, boolean caughtLoose, String before, String after) {
     }
 
-    private static final String[] TYPE_WORDS = {"정글+로밍", "정글 갱", "상대 로밍", "라인 교전", "한타"};
+    private static final String[] TYPE_WORDS = {"정글+로밍", "정글 갱", "상대 로밍", "라인 교전", "소규모 교전", "한타"};
 
     private CoachProbe() {
     }
@@ -71,7 +71,7 @@ public final class CoachProbe {
             if (!has(out, "데스 유형")) {
                 for (String word : TYPE_WORDS) {
                     if ((m.what() + m.why()).contains(word)) {
-                        String wrong = death.jungleInvolved() || death.roamInvolved() ? "라인 교전" : "정글 갱";
+                        String wrong = "라인 교전".equals(death.type()) ? "정글 갱" : "라인 교전";
                         if (!wrong.equals(word)) {
                             out.add(new Mutation("데스 유형", replaceInMistake(r, i, t -> t.replace(word, wrong)), word, wrong));
                         }

@@ -635,6 +635,61 @@ button {
   .deathmap__pin { transition: none; }
 }
 
+.deathmap-box { margin: 0; }
+
+/* 진영 색칠: 서버의 위치 구분과 같은 경계 */
+.deathmap__zones {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.zone--mine { fill: rgba(103, 183, 255, 0.16); }
+.zone--enemy { fill: rgba(255, 111, 97, 0.18); }
+
+.deathmap__base {
+  position: absolute;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(12, 26, 29, 0.85);
+  pointer-events: none;
+}
+
+.deathmap__base--blue { left: 4px; bottom: 4px; }
+.deathmap__base--red { right: 4px; top: 4px; }
+.deathmap__base.is-mine { color: var(--sky); }
+.deathmap__base.is-enemy { color: var(--coral); }
+
+.death__zone { font-size: 13px; color: var(--muted); }
+
+/* 라인전 이후(1차 포탑 파괴 후) 데스: 구분선 아래에 흐리게 */
+.death-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.death-divider::before,
+.death-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.death.is-late { opacity: 0.6; }
+.death.is-late.is-active { opacity: 1; }
+.deathmap__pin.is-late { opacity: 0.55; }
+.deathmap__pin.is-late.is-active { opacity: 1; }
+.death__zone--enemy { color: var(--coral); font-weight: 700; }
+
 /* ---------- 접기 ---------- */
 .more {
   margin-top: 18px;

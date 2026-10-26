@@ -24,6 +24,11 @@ export function signed(n) {
   return '0';
 }
 
+/** 눈에 띄게 표시할 데스 (상대가 더 와서 죽은 것). 라인 교전·소규모 교전·포탑은 기본색 */
+export function isAlertDeath(type) {
+  return !['라인 교전', '소규모 교전', '포탑/미니언'].includes(type);
+}
+
 export const positionLabel = (p) => POSITION_LABEL[p] ?? '-';
 export const queueLabel = (q) => QUEUE_LABEL[q] ?? '기타';
 

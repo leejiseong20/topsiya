@@ -1,13 +1,47 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { fetchLaneReport } from '../api.js';
 import { championKoName } from '../ddragon.js';
 import CsDiffChart from './CsDiffChart.jsx';
 import CoachCard from './CoachCard.jsx';
 import DeathMap from './DeathMap.jsx';
 
-import { signed } from '../format.js';
+import { isAlertDeath, signed } from '../format.js';
 
 export { signed };
+
+/** CS 격차가 이 이상 줄었을 때만 "흐름이 꺾인 구간"으로 보여준다 */
+const SWING_MIN = 5;
+
+function isMeaningful(swing) {
+  return swing && Math.abs(swing.change) >= SWING_MIN;
+}
+
+/** 숫자 뒤 조사: 끝자리가 0·3·6(영·삼·육)이면 '으로', 나머지는 '로' */
+function ro(n) {
+  return [0, 3, 6].includes(Math.abs(n) % 10) ? '으로' : '로';
+}
+
+/** "12~15분에 앞서던 CS 격차가 +9 → +6으로 줄었어요" 처럼 실제 값 변화로 설명한다 */
+export function describeSwing(swing, timeline) {
+  if (!swing) return null;
+  const at = (m) => timeline.find((p) => p.minute === m)?.csDiff;
+  const from = at(swing.fromMinute);
+  const to = at(swing.toMinute);
+  const when = `${swing.fromMinute}~${swing.toMinute}분에`;
+  if (from === undefined || to === undefined) {
+    return `${when} CS 격차가 ${Math.abs(swing.change)}개 줄었어요`;
+  }
+  const change = `${signed(from)} → ${signed(to)}${ro(to)}`;
+  if (from > 0 && to > 0) return `${when} 앞서던 CS 격차가 ${change} 줄었어요`;
+  if (from > 0 && to === 0) return `${when} 앞서던 CS 격차가 ${change} 따라잡혔어요`;
+  if (from > 0 && to < 0) return `${when} CS 격차가 ${change} 뒤집혔어요`;
+  if (from === 0) return `${when} CS 격차가 ${change} 밀렸어요`;
+  return `${when} CS 격차가 ${change} 더 벌어졌어요`;
+}
+
+function mmss(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
 
 function tone(n) {
   if (n > 0) return 'good';
@@ -41,6 +75,8 @@ export default function LanePanel({ matchId, puuid, position, champData }) {
   }
 
   const name = (c) => championKoName(champData, c);
+  const meaningfulSwing = isMeaningful(report.biggestCsSwing) ? report.biggestCsSwing : null;
+  const swingNote = describeSwing(meaningfulSwing, report.timeline);
 
   return (
     <section className="panel">
@@ -63,13 +99,8 @@ export default function LanePanel({ matchId, puuid, position, champData }) {
       </div>
 
       <div className="chart-box">
-        {report.biggestCsSwing && (
-          <p className="chart-box__note">
-            {report.biggestCsSwing.fromMinute}~{report.biggestCsSwing.toMinute}분에 CS{' '}
-            {Math.abs(report.biggestCsSwing.change)}개를 가장 크게 잃었어요
-          </p>
-        )}
-        <CsDiffChart timeline={report.timeline} swing={report.biggestCsSwing} deaths={report.deaths} />
+        {swingNote && <p className="chart-box__note">{swingNote}</p>}
+        <CsDiffChart timeline={report.timeline} swing={meaningfulSwing} deaths={report.deaths} />
       </div>
 
       <h4 className="panel__title">
@@ -82,27 +113,37 @@ export default function LanePanel({ matchId, puuid, position, champData }) {
           <DeathMap
             deaths={report.deaths}
             version={champData.version}
+            myTeamId={report.myTeamId}
             active={activeDeath}
             onSelect={setActiveDeath}
           />
           <ul className="deaths">
             {report.deaths.map((d, i) => (
-              <li
-                key={d.seconds}
-                className={`death ${activeDeath === d.seconds ? 'is-active' : ''}`}
-                onMouseEnter={() => setActiveDeath(d.seconds)}
-                onMouseLeave={() => setActiveDeath(null)}
-              >
-                <span className={`death__no ${d.type === '라인 교전' ? '' : 'death__no--alert'}`}>{i + 1}</span>
-                <span className="death__time">{d.time}</span>
-                <span className={`death__type ${d.type === '라인 교전' ? '' : 'death__type--alert'}`}>
-                  {d.type}
-                </span>
-                <span className="death__who">
-                  {[d.killer, ...d.assisters].map(name).join(', ')}
-                </span>
-                {d.myWardsLast2Min === 0 && <span className="death__ward">와드 없음</span>}
-              </li>
+              <Fragment key={d.seconds}>
+                {!d.lanePhase && (i === 0 || report.deaths[i - 1].lanePhase) && report.laneEndSeconds != null && (
+                  <li className="death-divider">
+                    라인전 끝 · {mmss(report.laneEndSeconds)} {report.laneEndReason}
+                  </li>
+                )}
+                <li
+                  className={`death ${activeDeath === d.seconds ? 'is-active' : ''} ${d.lanePhase ? '' : 'is-late'}`}
+                  onMouseEnter={() => setActiveDeath(d.seconds)}
+                  onMouseLeave={() => setActiveDeath(null)}
+                >
+                  <span className={`death__no ${isAlertDeath(d.type) ? 'death__no--alert' : ''}`}>{i + 1}</span>
+                  <span className="death__time">{d.time}</span>
+                  <span className={`death__type ${isAlertDeath(d.type) ? 'death__type--alert' : ''}`}>
+                    {d.type}
+                  </span>
+                  <span className="death__who">
+                    {[d.killer, ...d.assisters].map(name).join(', ')}
+                  </span>
+                  <span className={`death__zone ${d.zone === '상대 진영' ? 'death__zone--enemy' : ''}`}>
+                    {d.zone}
+                  </span>
+                  {d.myWardsLast2Min === 0 && <span className="death__ward">와드 없음</span>}
+                </li>
+              </Fragment>
             ))}
           </ul>
         </div>

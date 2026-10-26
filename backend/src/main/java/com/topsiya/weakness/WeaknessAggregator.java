@@ -51,8 +51,9 @@ public final class WeaknessAggregator {
             List<Death> early = r.deaths().stream()
                     .filter(d -> d.seconds() <= LANE_PHASE_END_SECONDS)
                     .toList();
-            int gameJungle = (int) early.stream().filter(Death::jungleInvolved).count();
-            int gameRoam = (int) early.stream().filter(Death::roamInvolved).count();
+            // 갱·로밍은 라인전 중(1차 포탑이 깨지기 전) 데스만 센다
+            int gameJungle = (int) early.stream().filter(Death::laneGank).count();
+            int gameRoam = (int) early.stream().filter(Death::laneRoam).count();
             int gameNoWard = (int) early.stream().filter(d -> d.myWardsLast2Min() == 0).count();
 
             deathsBefore15 += early.size();

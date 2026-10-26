@@ -102,12 +102,22 @@ final class CoachContextCheck {
         if (death == null) return;
         String at = "'" + clock + "' 데스";
 
-        boolean roam = text.contains("로밍");
-        if (roam) {
-            acc.context(death.roamInvolved(), at + "는 상대 로밍이 없었다 (실제 유형: " + death.type() + ")");
+        String afterLane = at + "는 라인전이 끝난 뒤(1차 포탑 파괴 후)라 ";
+        if (text.contains("로밍")) {
+            acc.context(death.laneRoam(), death.roamInvolved() && !death.lanePhase()
+                    ? afterLane + "로밍이 아니다 (실제 유형: " + death.type() + ")"
+                    : at + "는 상대 로밍이 없었다 (실제 유형: " + death.type() + ")");
         }
-        if (JUNGLE_CLAIM.matcher(text).find()) {
+        if (text.contains("갱") || text.contains("정글+로밍")) {
+            acc.context(death.laneGank(), death.jungleInvolved() && !death.lanePhase()
+                    ? afterLane + "갱이 아니다 (실제 유형: " + death.type() + ")"
+                    : at + "에 상대 정글은 참여하지 않았다 (실제 유형: " + death.type() + ")");
+        } else if (JUNGLE_CLAIM.matcher(text).find()) {
+            // "정글이 합류" 같은 표현은 라인전 이후여도 사실이면 맞다
             acc.context(death.jungleInvolved(), at + "에 상대 정글은 참여하지 않았다 (실제 유형: " + death.type() + ")");
+        }
+        if (text.contains("소규모 교전")) {
+            acc.context("소규모 교전".equals(death.type()), at + "는 소규모 교전이 아니다 (실제 유형: " + death.type() + ")");
         }
         if (text.contains("라인 교전")) {
             acc.context("라인 교전".equals(death.type()), at + "는 라인 교전이 아니다 (실제 유형: " + death.type() + ")");
@@ -222,6 +232,9 @@ final class CoachContextCheck {
                 x -> "한타".equals(x.type()),
                 Death::jungleInvolved,
                 Death::roamInvolved,
+                Death::laneGank,
+                Death::laneRoam,
+                x -> "소규모 교전".equals(x.type()),
                 x -> x.myWardsLast2Min() == 0,
                 x -> "상대 진영".equals(x.zone()));
         Set<Integer> counts = new TreeSet<>();

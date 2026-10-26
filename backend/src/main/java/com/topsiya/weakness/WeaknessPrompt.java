@@ -32,8 +32,8 @@ final class WeaknessPrompt {
             - diff 값은 "나 - 상대". 음수면 뒤처졌다는 뜻이다.
             - gamesBehindInCsAt15: 15분에 CS 가 뒤처진 경기 수
             - deathsBefore15: 15분까지 데스 수. 그중
-                · jungleGankDeathsBefore15: 상대 정글이 참여한 데스 (정글 갱)
-                · roamDeathsBefore15: 다른 라인 라이너가 내려와 참여한 데스 (상대 로밍)
+                · jungleGankDeathsBefore15: 라인전 중(1차 포탑이 깨지기 전) 상대 정글이 참여한 데스 (정글 갱)
+                · roamDeathsBefore15: 라인전 중 다른 라인 라이너가 내려와 참여한 데스 (상대 로밍)
                 · deathsWithNoWardBefore15: 죽기 전 2분 동안 와드 0개
                 · deathsInEnemyZoneBefore15: 상대 진영에서 죽음
               (한 데스가 정글 갱이면서 로밍일 수도 있어서 합이 deathsBefore15 와 다를 수 있다)
