@@ -3,6 +3,7 @@ import { fetchLaneReport } from '../api.js';
 import { championKoName } from '../ddragon.js';
 import CsDiffChart from './CsDiffChart.jsx';
 import CoachCard from './CoachCard.jsx';
+import DeathMap from './DeathMap.jsx';
 
 import { signed } from '../format.js';
 
@@ -17,6 +18,7 @@ function tone(n) {
 export default function LanePanel({ matchId, puuid, position, champData }) {
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
+  const [activeDeath, setActiveDeath] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,20 +78,34 @@ export default function LanePanel({ matchId, puuid, position, champData }) {
       {report.deaths.length === 0 ? (
         <p className="quiet">20분까지 한 번도 안 죽었어요.</p>
       ) : (
-        <ul className="deaths">
-          {report.deaths.map((d) => (
-            <li key={d.seconds} className="death">
-              <span className="death__time">{d.time}</span>
-              <span className={`death__type ${d.type === '라인 교전' ? '' : 'death__type--alert'}`}>
-                {d.type}
-              </span>
-              <span className="death__who">
-                {[d.killer, ...d.assisters].map(name).join(', ')}
-              </span>
-              {d.myWardsLast2Min === 0 && <span className="death__ward">와드 없음</span>}
-            </li>
-          ))}
-        </ul>
+        <div className="death-wrap">
+          <DeathMap
+            deaths={report.deaths}
+            version={champData.version}
+            active={activeDeath}
+            onSelect={setActiveDeath}
+          />
+          <ul className="deaths">
+            {report.deaths.map((d, i) => (
+              <li
+                key={d.seconds}
+                className={`death ${activeDeath === d.seconds ? 'is-active' : ''}`}
+                onMouseEnter={() => setActiveDeath(d.seconds)}
+                onMouseLeave={() => setActiveDeath(null)}
+              >
+                <span className={`death__no ${d.type === '라인 교전' ? '' : 'death__no--alert'}`}>{i + 1}</span>
+                <span className="death__time">{d.time}</span>
+                <span className={`death__type ${d.type === '라인 교전' ? '' : 'death__type--alert'}`}>
+                  {d.type}
+                </span>
+                <span className="death__who">
+                  {[d.killer, ...d.assisters].map(name).join(', ')}
+                </span>
+                {d.myWardsLast2Min === 0 && <span className="death__ward">와드 없음</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <details className="more">

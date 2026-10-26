@@ -1,5 +1,6 @@
 package com.topsiya.match;
 
+import com.topsiya.common.Parallel;
 import com.topsiya.riot.RiotApiClient;
 import com.topsiya.riot.dto.AccountDto;
 import com.topsiya.riot.dto.MatchDto;
@@ -30,9 +31,10 @@ public class MatchService {
         AccountDto account = riotApiClient.getAccount(gameName, tagLine);
         List<String> matchIds = riotApiClient.getMatchIds(account.puuid(), safeCount);
 
+        // 경기 상세는 동시에 받는다 (이미 저장된 경기는 파일에서 바로 읽힌다)
+        List<MatchDto> matches = Parallel.map(matchIds, riotApiClient::getMatch);
         List<MatchSummary> summaries = new ArrayList<>();
-        for (String matchId : matchIds) {
-            MatchDto match = riotApiClient.getMatch(matchId);
+        for (MatchDto match : matches) {
             MatchSummary summary = toSummary(match, account.puuid());
             if (summary != null) {
                 summaries.add(summary);

@@ -4,11 +4,12 @@ import { positionLabel, signed } from '../format.js';
 import { Mistake } from './CoachCard.jsx';
 import { GoalButton } from './GoalPanel.jsx';
 import VerifyNote from './VerifyNote.jsx';
+import MatchupTable from './MatchupTable.jsx';
 
 const MIN_GAMES = 2;
 
 /** 같은 포지션 경기를 묶어, 여러 판에 걸쳐 반복되는 실수를 찾는다 */
-export default function WeaknessPanel({ matches, puuid }) {
+export default function WeaknessPanel({ matches, puuid, champData }) {
   const groups = useMemo(() => {
     const map = new Map();
     matches
@@ -73,6 +74,7 @@ export default function WeaknessPanel({ matches, puuid }) {
       {current?.status === 'done' && (
         <HabitResult
           data={current.data}
+          champData={champData}
           position={selected}
           newestMatchId={groups.find(([p]) => p === selected)?.[1][0]}
         />
@@ -81,7 +83,7 @@ export default function WeaknessPanel({ matches, puuid }) {
   );
 }
 
-function HabitResult({ data, position, newestMatchId }) {
+function HabitResult({ data, champData, position, newestMatchId }) {
   const { stats, ai } = data;
   const [first, ...rest] = ai.weaknesses;
   const noWardRate =
@@ -126,6 +128,8 @@ function HabitResult({ data, position, newestMatchId }) {
           ))}
         </div>
       )}
+
+      <MatchupTable perGame={stats.perGame} champData={champData} />
 
       <details className="more">
         <summary>자세한 통계 보기</summary>

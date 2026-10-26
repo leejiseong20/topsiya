@@ -15,13 +15,15 @@ export async function loadChampionData() {
     );
     const names = {};
     const ids = {};
+    const tags = {};
     Object.values(json.data).forEach((champ) => {
       names[champ.id.toLowerCase()] = champ.name;
       ids[champ.id.toLowerCase()] = champ.id;
+      tags[champ.id.toLowerCase()] = champ.tags ?? [];
     });
-    cache = { version, names, ids };
+    cache = { version, names, ids, tags };
   } catch {
-    cache = { version: null, names: {}, ids: {} };
+    cache = { version: null, names: {}, ids: {}, tags: {} };
   }
   return cache;
 }
@@ -39,4 +41,19 @@ export function championKoName(data, championName) {
 export function championIconUrl(data, championName) {
   if (!data.version || !championName) return null;
   return `${DDRAGON}/${data.version}/icon/${normalizeId(data, championName)}`;
+}
+
+const TAG_LABEL = {
+  Fighter: '전사',
+  Tank: '탱커',
+  Mage: '마법사',
+  Assassin: '암살자',
+  Marksman: '원거리 딜러',
+  Support: '서포터',
+};
+
+/** 챔피언의 대표 역할군 (Data Dragon 첫 번째 태그). 모르면 null */
+export function championRole(data, championName) {
+  const tag = data.tags?.[championName?.toLowerCase()]?.[0];
+  return tag ? TAG_LABEL[tag] ?? tag : null;
 }

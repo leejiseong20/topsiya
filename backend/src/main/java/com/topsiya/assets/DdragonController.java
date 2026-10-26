@@ -80,6 +80,16 @@ public class DdragonController {
         return respond(body, MediaType.IMAGE_PNG, Duration.ofDays(7));
     }
 
+    /** 소환사의 협곡 미니맵 이미지 (데스 위치 표시용) */
+    @GetMapping("/{version}/map")
+    public ResponseEntity<byte[]> map(@PathVariable String version) {
+        if (!VERSION.matcher(version).matches()) {
+            return ResponseEntity.badRequest().build();
+        }
+        byte[] body = once(version + "-map11.png", () -> download("/cdn/" + version + "/img/map/map11.png"));
+        return respond(body, MediaType.IMAGE_PNG, Duration.ofDays(30));
+    }
+
     private byte[] download(String path) {
         return client.get().uri(path).retrieve().body(byte[].class);
     }

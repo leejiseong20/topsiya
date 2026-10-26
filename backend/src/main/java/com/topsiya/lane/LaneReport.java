@@ -60,6 +60,8 @@ public record LaneReport(
      * @param roamInvolved    라인 상대도 정글도 아닌 적(다른 라인 라이너)이 참여
      * @param zone            "우리 진영" / "강가" / "상대 진영" (대략적인 구분)
      * @param myWardsLast2Min 죽기 전 2분 동안 내가 설치한 와드 수
+     * @param x               죽은 위치 (맵 좌표 0~15000, 왼쪽 아래가 0). 미니맵 표시용, 없으면 null
+     * @param y               죽은 위치 (위로 갈수록 큼)
      */
     public record Death(
             String time,
@@ -70,7 +72,15 @@ public record LaneReport(
             boolean jungleInvolved,
             boolean roamInvolved,
             String zone,
-            int myWardsLast2Min
+            int myWardsLast2Min,
+            Integer x,
+            Integer y
     ) {
+
+        /** 위치 없이 만들 때 (테스트 등) */
+        public Death(String time, long seconds, String killer, List<String> assisters, String type,
+                     boolean jungleInvolved, boolean roamInvolved, String zone, int myWardsLast2Min) {
+            this(time, seconds, killer, assisters, type, jungleInvolved, roamInvolved, zone, myWardsLast2Min, null, null);
+        }
     }
 }

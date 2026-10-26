@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.topsiya.coach.CoachingException;
 import com.topsiya.coach.OpenAiClient;
+import com.topsiya.common.Parallel;
 import com.topsiya.lane.LaneAnalysisException;
 import com.topsiya.lane.LaneReport;
 import com.topsiya.lane.LaneService;
@@ -54,13 +55,11 @@ public class WeaknessService {
             return saved.get();
         }
 
-        // 1) 경기마다 라인전 요약 (이미 분석한 경기는 LaneService 가 저장해 둔 것을 쓴다)
+        // 1) 경기마다 라인전 요약을 동시에 만든다 (맞라인이 없는 경기 등은 null → 건너뜀)
         List<LaneReport> reports = new ArrayList<>();
-        for (String matchId : ids) {
-            try {
-                reports.add(laneService.analyze(matchId, request.puuid()));
-            } catch (LaneAnalysisException e) {
-                // 맞라인이 없는 경기 등은 건너뛴다
+        for (LaneReport report : Parallel.map(ids, matchId -> analyzeOrSkip(matchId, request.puuid()))) {
+            if (report != null) {
+                reports.add(report);
             }
         }
         if (reports.size() < MIN_GAMES) {
@@ -81,6 +80,14 @@ public class WeaknessService {
 
         store.write(CATEGORY, key, report);
         return report;
+    }
+
+    private LaneReport analyzeOrSkip(String matchId, String puuid) {
+        try {
+            return laneService.analyze(matchId, puuid);
+        } catch (LaneAnalysisException e) {
+            return null;
+        }
     }
 
     private String toJson(WeaknessStats stats) {

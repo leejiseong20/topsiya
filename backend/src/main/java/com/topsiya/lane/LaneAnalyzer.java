@@ -199,7 +199,9 @@ public final class LaneAnalyzer {
                     jungle,
                     roam,
                     zoneOf(e.position(), me.teamId()),
-                    countWards(events, myId, e.timestamp() - WARD_LOOKBACK_MS, e.timestamp())
+                    countWards(events, myId, e.timestamp() - WARD_LOOKBACK_MS, e.timestamp()),
+                    e.position() == null ? null : e.position().x(),
+                    e.position() == null ? null : e.position().y()
             ));
         }
         return result;

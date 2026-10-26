@@ -571,6 +571,70 @@ button {
   color: var(--amber);
 }
 
+/* ---------- 데스 미니맵 ---------- */
+.death-wrap {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.deathmap {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.deathmap__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.6) brightness(0.75);
+}
+
+.deathmap__pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease;
+}
+
+.deathmap__pin--alert { background: var(--coral); color: #2a0b07; }
+.deathmap__pin.is-active { transform: translate(-50%, -50%) scale(1.35); z-index: 1; box-shadow: 0 0 0 3px var(--amber); }
+
+.death__no {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.death__no--alert { background: var(--coral); color: #2a0b07; }
+.death { border-radius: 8px; padding: 4px 6px; margin: 0 -6px; }
+.death.is-active { background: var(--surface-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .deathmap__pin { transition: none; }
+}
+
 /* ---------- 접기 ---------- */
 .more {
   margin-top: 18px;
@@ -873,6 +937,49 @@ button {
   font: inherit;
 }
 
+/* ---------- 상대 유형별 ---------- */
+.matchup {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.matchup__title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.matchup__insight {
+  margin: 6px 0 0;
+  font-size: 17px;
+  word-break: keep-all;
+}
+
+.matchup__insight b { color: var(--coral); }
+.matchup__insight span { color: var(--muted); font-size: 14px; }
+
+.matchup__table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+}
+
+.matchup__table th,
+.matchup__table td {
+  padding: 8px 4px;
+  border-top: 1px solid var(--line);
+  text-align: right;
+}
+
+.matchup__table th:first-child { text-align: left; font-weight: 600; }
+.matchup__table thead th { border-top: none; color: var(--muted); font-weight: 500; font-size: 13px; }
+.matchup__table tr.is-weak th:first-child,
+.matchup__table tr.is-weak td:nth-child(4) { color: var(--coral); }
+
 /* ---------- 도전 중인 목표 ---------- */
 .goal {
   margin-bottom: 18px;
@@ -1008,6 +1115,8 @@ button {
   .logo__mark { width: 46px; height: 46px; }
   .hero--top { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .habit, .panel, .coach, .coach-cta, .goal { padding: 16px; }
+  .death-wrap { grid-template-columns: minmax(0, 1fr); }
+  .deathmap { max-width: 260px; }
   .goal__text { font-size: 19px; }
   .numbers, .checkpoints { gap: 8px; }
   .number, .checkpoint { padding: 10px 12px; }

@@ -22,7 +22,7 @@ export default function App() {
   const [status, setStatus] = useState('idle'); // idle | loading | done | error
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
-  const [champData, setChampData] = useState({ version: null, names: {}, ids: {} });
+  const [champData, setChampData] = useState({ version: null, names: {}, ids: {}, tags: {} });
   const hash = useHash();
   const [appInfo, setAppInfo] = useState({ devTools: false, demoMode: false });
 
@@ -118,7 +118,12 @@ export default function App() {
             ) : (
               <>
                 <GoalPanel champData={champData} />
-                <WeaknessPanel key={result.puuid} matches={result.matches} puuid={result.puuid} />
+                <WeaknessPanel
+                  key={result.puuid}
+                  matches={result.matches}
+                  puuid={result.puuid}
+                  champData={champData}
+                />
 
                 <h3 className="section-title">최근 {result.matches.length}경기</h3>
                 <div className="match-list">

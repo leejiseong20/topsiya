@@ -66,6 +66,8 @@ class LaneAnalyzerTest {
         assertThat(death.roamInvolved()).isFalse();
         assertThat(death.zone()).isEqualTo("상대 진영");
         assertThat(death.myWardsLast2Min()).isEqualTo(1); // 12:30 와드만 2분 안
+        assertThat(death.x()).isEqualTo(4000);            // 미니맵 표시용 좌표
+        assertThat(death.y()).isEqualTo(12500);
     }
 
     @Test
